@@ -38,7 +38,7 @@ cd fuzz
 
 The continuous campaign covers 51 audited OpenDP operation contracts across eight targets, including ALP-specific precision/floor/fraction behavior and composed directed-operation sequences. It uses per-core processes, persistent shared corpora, boundary seeds, value profiling, structured violation reports, runner-level timeout/crash reports, and report aggregation.
 
-Confirmed, conservatively deduplicated upstream findings live under [`findings/`](findings/). Raw fuzzer reports are intentionally kept separate from this publishable evidence layer.
+Confirmed, conservatively deduplicated findings live under [`findings/`](findings/). Raw fuzzer reports are intentionally kept separate from this publishable evidence layer. Root-cause analysis ([`findings/ROOT_CAUSE.md`](findings/ROOT_CAUSE.md)) established that most differential findings were opendp-num *adapter* rounding defects rather than dashu bugs; they were fixed by the exact-rational directed rounding now in `src/backend/dashu.rs` and archived under [`findings/resolved-by-adapter-fix/`](findings/resolved-by-adapter-fix/). The remaining genuine upstream residue is DASHU-008 (dashu-int GCD panic) and DASHU-007 (no correctly-rounded `log2`), plus DASHU-015 (a dashu `to_f64` exactness bug the adapter now routes around). The direct dashu-API probe and adapter regression check are `examples/root_cause.rs` and `examples/verify_fix.rs`.
 
 See [FUZZING.md](FUZZING.md) for the complete operation matrix, continuous runner, corpus strategy, logging format, and reproduction workflow.
 
