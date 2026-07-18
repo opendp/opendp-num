@@ -51,9 +51,7 @@ impl ExactUnary<Neg, malachite::Rational> for Malachite {
 // +/-inf/+/-max, produces subnormals, and honours signed zero. Because directed
 // (Floor/Ceiling) rounding does not suffer double rounding, computing an
 // operation at a generous working precision and then converting once with the
-// same directed mode yields the correctly rounded f64/f32 result — so this
-// backend mirrors the thin MPFR adapter rather than the exact-rational machinery
-// the Dashu adapter needs.
+// same directed mode yields the correctly rounded f64/f32 result.
 // ---------------------------------------------------------------------------
 
 const WORK_PREC: u64 = 128;
@@ -331,26 +329,26 @@ macro_rules! directed_powi {
 directed_powi!(f64);
 directed_powi!(f32);
 
-// Exact-number conversions saturate to +/-inf on overflow (no error), matching
-// the MPFR adapter's conversion contract.
+// Exact-number conversions use malachite's direct, single correctly-rounded
+// `RoundingFrom` (no `Float` intermediate, so no Nearest double rounding). They
+// saturate to +/-inf on overflow with no error, matching the MPFR adapter.
 macro_rules! convert_to_primitive {
-    ($from:ty, $to:ty, $method:ident) => {
+    ($from:ty, $to:ty) => {
         impl Convert<$from, $to> for Malachite {
             fn convert(value: &$from, direction: Direction) -> Result<Rounded<$to>> {
-                let (float, _) = Float::$method(value.clone(), WORK_PREC, to_rm(direction));
-                let out = <$to as PrimitiveFloat>::round_from(&float, to_rm(direction));
+                let out = <$to as RoundingFrom<&$from>>::rounding_from(value, to_rm(direction)).0;
                 Ok(Rounded::new(out, direction))
             }
         }
     };
 }
 
-convert_to_primitive!(malachite::Rational, f64, from_rational_prec_round);
-convert_to_primitive!(malachite::Rational, f32, from_rational_prec_round);
-convert_to_primitive!(malachite::Integer, f64, from_integer_prec_round);
-convert_to_primitive!(malachite::Integer, f32, from_integer_prec_round);
-convert_to_primitive!(malachite::Natural, f64, from_natural_prec_round);
-convert_to_primitive!(malachite::Natural, f32, from_natural_prec_round);
+convert_to_primitive!(malachite::Rational, f64);
+convert_to_primitive!(malachite::Rational, f32);
+convert_to_primitive!(malachite::Integer, f64);
+convert_to_primitive!(malachite::Integer, f32);
+convert_to_primitive!(malachite::Natural, f64);
+convert_to_primitive!(malachite::Natural, f32);
 
 // A malachite Integer needs to become a Float for powi.
 trait IntegerToFloat {

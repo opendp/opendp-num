@@ -14,14 +14,19 @@ ROOT = Path(__file__).resolve().parent
 
 def render_finding(finding: dict, baseline: dict, inputs: list[dict]) -> str:
     versions = ", ".join(f"`{name} {version}`" for name, version in baseline.items())
-    reproductions = "\n".join(
-        f"cargo fuzz run --sanitizer none {item['target']} findings/{finding['library']}/{finding['id']}/inputs/{Path(item['path']).name}"
-        for item in inputs
-    )
-    evidence = "\n".join(
-        f"- `{Path(item['path']).name}`: {item['bytes']} bytes, SHA-256 `{item['sha256']}`; expects `{item['expected']}`"
-        for item in inputs
-    )
+    if inputs:
+        reproductions = "\n".join(
+            f"cargo fuzz run --sanitizer none {item['target']} findings/{finding['library']}/{finding['id']}/inputs/{Path(item['path']).name}"
+            for item in inputs
+        )
+        evidence = "\n".join(
+            f"- `{Path(item['path']).name}`: {item['bytes']} bytes, SHA-256 `{item['sha256']}`; expects `{item['expected']}`"
+            for item in inputs
+        )
+    else:
+        # Probe-verified finding: reproduced directly against the library API.
+        reproductions = finding.get("direct_reproduction", "")
+        evidence = "Reproduced directly against the library API; see the command above."
     return f"""# {finding['id']}: {finding['title']}
 
 Status: confirmed on the locked baseline. Confidence: {finding['confidence']}. Classification: `{finding['classification']}`.

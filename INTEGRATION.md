@@ -8,8 +8,8 @@
 6. Add an architecture check rejecting `dashu`, `malachite`, and `rug` imports outside `opendp-num`.
 7. Run the contract suite under each individual feature and `all-backends`.
 8. Run MPFR differential tests and fuzzing in dedicated Linux jobs so ordinary Windows packaging remains C-free.
-9. Add Malachite directed capabilities operation-by-operation. Missing support remains a missing trait implementation, never a runtime fallback.
-10. Switch OpenDP's selected backend only after the full mechanism suite, retained fuzz corpus, and performance thresholds pass.
+9. Extend a backend's directed capabilities operation-by-operation only as needed. Missing support remains a missing trait implementation, never a runtime fallback.
+10. Change OpenDP's selected backend only after the full mechanism suite, retained fuzz corpus, and performance thresholds pass.
 
 ## First compiler-validation pass
 

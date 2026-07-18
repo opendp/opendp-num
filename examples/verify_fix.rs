@@ -7,7 +7,7 @@
 use dashu::integer::IBig;
 use opendp_num::{
     Add, Convert, DirectedBinary, DirectedPowI, DirectedUnary, Direction, Div, Exp, ExpM1, Ln1p,
-    Mul, Sub, backend::dashu::Dashu,
+    Mul, Sqrt, Sub, backend::dashu::Dashu,
 };
 
 fn check_bits(name: &str, got: u64, want: u64) {
@@ -152,6 +152,25 @@ fn main() {
     .unwrap();
     let r = <Dashu as Convert<_, f64>>::convert(&third, Direction::Nearest).unwrap();
     check_bits("1/3 -> f64 Nearest", r.value.to_bits(), (1.0f64 / 3.0).to_bits());
+
+    // Signed zero of sign-preserving transcendentals (found by continued fuzzing):
+    // ln1p(-0), expm1(-0), sqrt(-0) all keep the negative zero.
+    let r = <Dashu as DirectedUnary<Ln1p, f64>>::eval(-0.0, Direction::Up).unwrap();
+    check_bits("ln1p(-0) Up", r.value.to_bits(), 0x8000000000000000);
+    let r = <Dashu as DirectedUnary<ExpM1, f64>>::eval(-0.0, Direction::Up).unwrap();
+    check_bits("expm1(-0) Up", r.value.to_bits(), 0x8000000000000000);
+    let r = <Dashu as DirectedUnary<Sqrt, f64>>::eval(-0.0, Direction::Down).unwrap();
+    check_bits("sqrt(-0) Down", r.value.to_bits(), 0x8000000000000000);
+
+    // powi overflow must return a clean Overflow error / saturate, not panic on an
+    // FBig infinity: 2^2000 far exceeds f64::MAX.
+    let r = <Dashu as DirectedPowI<f64>>::eval(2.0, 2000, Direction::Down).unwrap();
+    check_bits("powi overflow Down", r.value.to_bits(), f64::MAX.to_bits());
+    assert!(
+        <Dashu as DirectedPowI<f64>>::eval(2.0, 2000, Direction::Up).is_err(),
+        "powi overflow Up should be an Overflow error"
+    );
+    println!("  [PASS] powi overflow Up: Overflow error");
 
     println!("\nAll adapter-fix checks passed.");
 }

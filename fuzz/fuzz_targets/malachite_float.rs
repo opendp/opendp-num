@@ -5,15 +5,19 @@
 //! signed-integer power, and exact-number-to-primitive conversion, for f32 and
 //! f64 in every directed rounding mode.
 
+use std::str::FromStr;
+
 use arbitrary::{Arbitrary, Unstructured};
 use libfuzzer_sys::fuzz_target;
+use malachite::{Integer, Natural, Rational};
 use opendp_num::backend::{malachite::Malachite, mpfr::Mpfr};
 use opendp_num::{
-    Add, DirectedBinary, DirectedPowI, DirectedUnary, Direction, Div, Error, Exp, ExpM1, Ln, Ln1p,
-    Log2, Mul, Result, Rounded, Sqrt, Sub,
+    Add, Convert, DirectedBinary, DirectedPowI, DirectedUnary, Direction, Div, Error, Exp, ExpM1,
+    FromParts, Ln, Ln1p, Log2, Mul, Result, Rounded, Sqrt, Sub,
 };
 use opendp_num_fuzz::{
-    BinaryCase, UnaryCase, any_direction, catch_backend, fail, special_f32, special_f64,
+    BinaryCase, ConversionCase, UnaryCase, any_direction, catch_backend, fail, signed_decimal,
+    special_f32, special_f64, split_evenly, unsigned_decimal,
 };
 
 const TARGET: &str = "malachite_float";
@@ -23,7 +27,7 @@ fuzz_target!(|data: &[u8]| {
     let Ok(kind) = u8::arbitrary(&mut u) else {
         return;
     };
-    match kind % 3 {
+    match kind % 4 {
         0 => {
             if let Ok(case) = BinaryCase::arbitrary(&mut u) {
                 binary(&case, data);
@@ -34,13 +38,110 @@ fuzz_target!(|data: &[u8]| {
                 unary(&case, data);
             }
         }
-        _ => {
+        2 => {
             if let Ok(case) = UnaryCase::arbitrary(&mut u) {
                 powi(&case, data);
             }
         }
+        _ => {
+            if let Ok(case) = ConversionCase::arbitrary(&mut u) {
+                conversion(&case, data);
+            }
+        }
     }
 });
+
+fn conversion(case: &ConversionCase, data: &[u8]) {
+    let direction = any_direction(case.direction);
+    let chunks = split_evenly(&case.payload, 2);
+    let signed = signed_decimal(chunks[0], case.sign, case.selector);
+    let unsigned = unsigned_decimal(chunks[0], case.selector);
+    let mut den = unsigned_decimal(chunks[1], case.selector.wrapping_add(1));
+    if den == "0" {
+        den = "1".to_owned();
+    }
+    let f64_out = case.bits & 1 == 0;
+    match case.operation % 3 {
+        0 => {
+            let mal = Integer::from_str(&signed).unwrap();
+            let rug = rug::Integer::from_str(&signed).unwrap();
+            let f = vec![("integer", signed.clone()), ("direction", format!("{direction:?}"))];
+            if f64_out {
+                compare64(
+                    "integer_to_f64",
+                    data,
+                    &f,
+                    <Malachite as Convert<_, f64>>::convert(&mal, direction),
+                    <Mpfr as Convert<_, f64>>::convert(&rug, direction),
+                );
+            } else {
+                compare32(
+                    "integer_to_f32",
+                    data,
+                    &f,
+                    <Malachite as Convert<_, f32>>::convert(&mal, direction),
+                    <Mpfr as Convert<_, f32>>::convert(&rug, direction),
+                );
+            }
+        }
+        1 => {
+            let mal = Natural::from_str(&unsigned).unwrap();
+            let rug = rug::Integer::from_str(&unsigned).unwrap();
+            let f = vec![("natural", unsigned.clone()), ("direction", format!("{direction:?}"))];
+            if f64_out {
+                compare64(
+                    "natural_to_f64",
+                    data,
+                    &f,
+                    <Malachite as Convert<_, f64>>::convert(&mal, direction),
+                    <Mpfr as Convert<_, f64>>::convert(&rug, direction),
+                );
+            } else {
+                compare32(
+                    "natural_to_f32",
+                    data,
+                    &f,
+                    <Malachite as Convert<_, f32>>::convert(&mal, direction),
+                    <Mpfr as Convert<_, f32>>::convert(&rug, direction),
+                );
+            }
+        }
+        _ => {
+            let mal = Rational::from_integers(
+                Integer::from_str(&signed).unwrap(),
+                Integer::from_str(&den).unwrap(),
+            );
+            let rug = <Mpfr as FromParts<rug::Rational, rug::Integer, rug::Integer>>::from_parts(
+                rug::Integer::from_str(&signed).unwrap(),
+                rug::Integer::from_str(&den).unwrap(),
+            )
+            .unwrap();
+            let f = vec![
+                ("numerator", signed.clone()),
+                ("denominator", den.clone()),
+                ("direction", format!("{direction:?}")),
+            ];
+            if f64_out {
+                compare64(
+                    "rational_to_f64",
+                    data,
+                    &f,
+                    <Malachite as Convert<_, f64>>::convert(&mal, direction),
+                    <Mpfr as Convert<_, f64>>::convert(&rug, direction),
+                );
+            } else {
+                compare32(
+                    "rational_to_f32",
+                    data,
+                    &f,
+                    <Malachite as Convert<_, f32>>::convert(&mal, direction),
+                    <Mpfr as Convert<_, f32>>::convert(&rug, direction),
+                );
+            }
+        }
+    }
+}
+
 
 fn binary(case: &BinaryCase, data: &[u8]) {
     let direction = any_direction(case.direction);

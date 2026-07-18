@@ -1,0 +1,18 @@
+{
+  "context": {
+    "dashu": "-0.000000000000000000000000000000000000000000001401298464324817 (0xb6a0000000000000)",
+    "direction": "Down",
+    "exponent": "-53",
+    "format": "f64",
+    "mpfr": "0 (0x0000000000000000)",
+    "value": "1",
+    "value_bits": "0x3ff0000000000000"
+  },
+  "input_hex": "0001001f000000000000f03f02000000",
+  "operation": "log2",
+  "reason": "correctly rounded value differs from MPFR",
+  "reproducer": "fuzz/reports/directed_unary/7855adf79e754767.input",
+  "schema": 1,
+  "target": "directed_unary",
+  "timestamp_unix": 1784382883
+}

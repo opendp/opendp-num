@@ -27,12 +27,28 @@
           "path": "findings/dashu-float/DASHU-007/inputs/DASHU-007-direct.input",
           "sha256": "f3e1b32e5cd854b919a2bf8a501262d914e4f90dab16c56a2a9f8f95ed1f277a",
           "target": "directed_unary"
+        },
+        {
+          "bytes": 16,
+          "expected": "operation=log2 reason=correctly rounded value differs from MPFR",
+          "path": "findings/dashu-float/DASHU-007/inputs/DASHU-007-one.input",
+          "sha256": "a953ac42b9072fefd3c7d517e60047cf03ca79536841904e39b60902f46968c4",
+          "target": "directed_unary"
+        },
+        {
+          "bytes": 16,
+          "expected": "operation=log2 reason=correctly rounded value differs from MPFR",
+          "path": "findings/dashu-float/DASHU-007/inputs/DASHU-007-max.input",
+          "sha256": "02a5a7c330f6f2226a1fa8a5ac43934632fc75737c4d8315c8215a1056ec98f8",
+          "target": "directed_unary"
         }
       ],
       "library": "dashu-float",
       "reports": [
         "findings/dashu-float/DASHU-007/reports/8a1c248eb519cf70.json",
-        "findings/dashu-float/DASHU-007/reports/a646a81a4a4a3873.json"
+        "findings/dashu-float/DASHU-007/reports/a646a81a4a4a3873.json",
+        "findings/dashu-float/DASHU-007/reports/7855adf79e754767.json",
+        "findings/dashu-float/DASHU-007/reports/ffed9dc01634c7f2.json"
       ],
       "title": "Directed log2 differs from MPFR across magnitude ranges"
     },
@@ -60,6 +76,16 @@
       "library": "dashu-int",
       "reports": [],
       "title": "Rational construction triggers internal allocation panic in GCD"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "directory": "findings/dashu/DASHU-015",
+      "id": "DASHU-015",
+      "inputs": [],
+      "library": "dashu",
+      "reports": [],
+      "title": "IBig/UBig to_f64 reports an inexact conversion as Exact and rounds to the wrong side"
     }
   ],
   "schema": 1

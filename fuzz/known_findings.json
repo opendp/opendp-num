@@ -22,9 +22,9 @@
       "classification": "incorrect-result",
       "confidence": "high",
       "upstream_status": "Still reproduces with dashu-float 0.5.0.",
-      "summary": "Dashu log2 differs from MPFR both near 2^-24 under downward rounding and at f64::MIN_POSITIVE under upward rounding.",
-      "impact": "The error is many ULPs rather than a tie-breaking or signed-zero difference.",
-      "deduplication": "The direct and sequence inputs isolate the same log2 implementation; the discrepancies vary in size but share the operation-level root.",
+      "summary": "Dashu log2 differs from MPFR across magnitude ranges and even for exact powers of two: near 2^-24 under downward rounding, at f64::MIN_POSITIVE under upward rounding, log2(1.0) downward returns a small negative value instead of 0, and log2(f64::MAX) downward is loose by many ULPs. dashu-float exposes only f32-precision log2_bounds, so no directed log2 is correctly rounded.",
+      "impact": "The error is many ULPs rather than a tie-breaking or signed-zero difference, and even inputs whose log2 is an exact integer are not returned exactly.",
+      "deduplication": "The direct, exact-power-of-two, and sequence inputs all isolate the same log2 implementation (the f32-precision log2_bounds); the discrepancies vary in size but share the operation-level root.",
       "inputs": [
         {
           "target": "opendp_sequences",
@@ -35,11 +35,23 @@
           "target": "directed_unary",
           "path": "known_inputs/DASHU-007-direct.input",
           "expected": "operation=log2 reason=correctly rounded value differs from MPFR"
+        },
+        {
+          "target": "directed_unary",
+          "path": "known_inputs/DASHU-007-one.input",
+          "expected": "operation=log2 reason=correctly rounded value differs from MPFR"
+        },
+        {
+          "target": "directed_unary",
+          "path": "known_inputs/DASHU-007-max.input",
+          "expected": "operation=log2 reason=correctly rounded value differs from MPFR"
         }
       ],
       "reports": [
         "reports/opendp_sequences/8a1c248eb519cf70.json",
-        "reports/directed_unary/a646a81a4a4a3873.json"
+        "reports/directed_unary/a646a81a4a4a3873.json",
+        "reports/directed_unary/7855adf79e754767.json",
+        "reports/directed_unary/ffed9dc01634c7f2.json"
       ]
     },
     {
@@ -65,9 +77,23 @@
         }
       ],
       "reports": []
+    },
+    {
+      "id": "DASHU-015",
+      "library": "dashu",
+      "title": "IBig/UBig to_f64 reports an inexact conversion as Exact and rounds to the wrong side",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "upstream_status": "Reproduces directly against dashu 0.5.0. opendp-num defends against it by not trusting the Approximation tag, so it no longer manifests through the adapter, but the dashu defect itself remains.",
+      "summary": "IBig::from(-(2^128 - 1)).to_f64() returns Approximation::Exact(-3.402823669209385e38) even though -(2^128 - 1) is not representable as f64, and the returned value is on the wrong side of the exact value (larger magnitude). A caller that trusts the Exact tag gets an incorrect, non-directed result.",
+      "impact": "Any consumer relying on to_f64 to signal exactness, or on the directed rounding implied by the Approximation sign, receives a silently incorrect conversion.",
+      "deduplication": "A single dashu conversion-rounding/exactness-reporting defect. Distinct from the correctly-rounded-arithmetic behavior of RBig.",
+      "inputs": [],
+      "reports": [],
+      "direct_reproduction": "cargo run --example root_cause --features all-backends"
     }
   ],
-  "resolved_by_adapter_fix": [
+  "caused_by_adapter": [
     {
       "id": "DASHU-002",
       "library": "dashu",
@@ -94,7 +120,7 @@
         "reports/directed_binary/0c3e63d5e21a4bda.json",
         "reports/opendp_sequences/1342db672e99eee1.json"
       ],
-      "resolution": "Resolved in opendp-num by the exact-rational directed rounding in src/backend/dashu.rs (exact RBig arithmetic + single correctly-rounded directed conversion, native prechecks removed). No longer reproduces on the fixed adapter; see findings/ROOT_CAUSE.md."
+      "cause": "opendp-num adapter defect (not a dashu bug), fixed in src/backend/dashu.rs."
     },
     {
       "id": "DASHU-004",
@@ -122,7 +148,7 @@
         "reports/directed_unary/0b06978bbbb750ea.json",
         "reports/directed_unary/e1d6472181e0032a.json"
       ],
-      "resolution": "Resolved in opendp-num by the exact-rational directed rounding in src/backend/dashu.rs (exact RBig arithmetic + single correctly-rounded directed conversion, native prechecks removed). No longer reproduces on the fixed adapter; see findings/ROOT_CAUSE.md."
+      "cause": "opendp-num adapter defect (not a dashu bug), fixed in src/backend/dashu.rs."
     },
     {
       "id": "DASHU-005",
@@ -144,7 +170,7 @@
       "reports": [
         "reports/directed_unary/5cc0a46bda775a02.json"
       ],
-      "resolution": "Resolved in opendp-num by the exact-rational directed rounding in src/backend/dashu.rs (exact RBig arithmetic + single correctly-rounded directed conversion, native prechecks removed). No longer reproduces on the fixed adapter; see findings/ROOT_CAUSE.md."
+      "cause": "opendp-num adapter defect (not a dashu bug), fixed in src/backend/dashu.rs."
     },
     {
       "id": "DASHU-006",
@@ -166,7 +192,7 @@
       "reports": [
         "reports/directed_unary/8b0bdbe20a751a93.json"
       ],
-      "resolution": "Resolved in opendp-num by the exact-rational directed rounding in src/backend/dashu.rs (exact RBig arithmetic + single correctly-rounded directed conversion, native prechecks removed). No longer reproduces on the fixed adapter; see findings/ROOT_CAUSE.md."
+      "cause": "opendp-num adapter defect (not a dashu bug), fixed in src/backend/dashu.rs."
     },
     {
       "id": "DASHU-010",
@@ -200,7 +226,7 @@
         "reports/directed_binary/a97b74afcae1796a.json",
         "reports/opendp_sequences/207d08cff0bc5202.json"
       ],
-      "resolution": "Resolved in opendp-num by the exact-rational directed rounding in src/backend/dashu.rs (exact RBig arithmetic + single correctly-rounded directed conversion, native prechecks removed). No longer reproduces on the fixed adapter; see findings/ROOT_CAUSE.md."
+      "cause": "opendp-num adapter defect (not a dashu bug), fixed in src/backend/dashu.rs."
     },
     {
       "id": "DASHU-011",
@@ -222,7 +248,7 @@
       "reports": [
         "reports/directed_unary/5c2b26af1ca286ec.json"
       ],
-      "resolution": "Resolved in opendp-num by the exact-rational directed rounding in src/backend/dashu.rs (exact RBig arithmetic + single correctly-rounded directed conversion, native prechecks removed). No longer reproduces on the fixed adapter; see findings/ROOT_CAUSE.md."
+      "cause": "opendp-num adapter defect (not a dashu bug), fixed in src/backend/dashu.rs."
     },
     {
       "id": "DASHU-012",
@@ -250,7 +276,7 @@
         "reports/directed_binary/84885098f4fa901b.json",
         "reports/opendp_sequences/aef8a6675f36de78.json"
       ],
-      "resolution": "Resolved in opendp-num by the exact-rational directed rounding in src/backend/dashu.rs (exact RBig arithmetic + single correctly-rounded directed conversion, native prechecks removed). No longer reproduces on the fixed adapter; see findings/ROOT_CAUSE.md."
+      "cause": "opendp-num adapter defect (not a dashu bug), fixed in src/backend/dashu.rs."
     },
     {
       "id": "DASHU-013",
@@ -272,7 +298,7 @@
       "reports": [
         "reports/directed_unary/68ac45c29e4d106d.json"
       ],
-      "resolution": "Resolved in opendp-num by the exact-rational directed rounding in src/backend/dashu.rs (exact RBig arithmetic + single correctly-rounded directed conversion, native prechecks removed). No longer reproduces on the fixed adapter; see findings/ROOT_CAUSE.md."
+      "cause": "opendp-num adapter defect (not a dashu bug), fixed in src/backend/dashu.rs."
     },
     {
       "id": "DASHU-014",
@@ -294,42 +320,7 @@
       "reports": [
         "reports/opendp_sequences/9da426f0f20f49c9.json"
       ],
-      "resolution": "Resolved in opendp-num by the exact-rational directed rounding in src/backend/dashu.rs (exact RBig arithmetic + single correctly-rounded directed conversion, native prechecks removed). No longer reproduces on the fixed adapter; see findings/ROOT_CAUSE.md."
-    },
-    {
-      "id": "DASHU-015",
-      "library": "dashu",
-      "title": "Directed big-integer-to-f64 conversion rounds toward larger magnitude regardless of direction",
-      "classification": "incorrect-result",
-      "confidence": "high",
-      "upstream_status": "Confirmed on Dashu 0.5.0.",
-      "summary": "Converting -(2^128 - 1) to f64 under upward rounding returns -3.402823669209385e38 instead of MPFR's less-negative adjacent value, and converting +(2^128 - 1) as a natural under downward rounding returns 3.402823669209385e38 instead of MPFR's smaller adjacent value.",
-      "impact": "Around the 2^128 magnitude, Dashu's directed integer/natural conversion always rounds to the larger-magnitude neighbor, violating the requested directed bound in both directions.",
-      "deduplication": "The upward signed-integer and downward natural manifestations share the same integer conversion path and the same too-large-magnitude symptom on the same 2^128-1 magnitude, so they are grouped as one directed integer-conversion rounding defect. Kept separate from rational/nearest conversion behavior, which uses a different path and rounding mode.",
-      "inputs": [
-        {
-          "target": "conversions",
-          "path": "known_inputs/DASHU-015.input",
-          "expected": "operation=integer_to_f64 reason=directed conversion differs from MPFR"
-        },
-        {
-          "target": "conversions",
-          "path": "known_inputs/DASHU-015-b.input",
-          "expected": "operation=integer_to_f64 reason=directed conversion differs from MPFR"
-        },
-        {
-          "target": "conversions",
-          "path": "known_inputs/DASHU-015-natural.input",
-          "expected": "operation=natural_to_f64 reason=directed conversion differs from MPFR"
-        }
-      ],
-      "reports": [
-        "reports/conversions/1e80bf90ded7b7b8.json",
-        "reports/conversions/d83a59f43ee9d1ee.json",
-        "reports/conversions/ae8f47dcd91babcd.json"
-      ],
-      "resolution": "Resolved in opendp-num by the exact-rational directed rounding in src/backend/dashu.rs (exact RBig arithmetic + single correctly-rounded directed conversion, native prechecks removed). No longer reproduces on the fixed adapter; see findings/ROOT_CAUSE.md.",
-      "upstream_dashu": "Genuine dashu bug: IBig::to_f64() reports Exact for an inexact value. The adapter defends by not trusting the Approximation tag, so it no longer manifests through opendp-num, but the dashu defect remains. Evidence: examples/root_cause.rs."
+      "cause": "opendp-num adapter defect (not a dashu bug), fixed in src/backend/dashu.rs."
     },
     {
       "id": "DASHU-016",
@@ -351,7 +342,7 @@
       "reports": [
         "reports/directed_binary/762552d9d3c4caf6.json"
       ],
-      "resolution": "Resolved in opendp-num by the exact-rational directed rounding in src/backend/dashu.rs (exact RBig arithmetic + single correctly-rounded directed conversion, native prechecks removed). No longer reproduces on the fixed adapter; see findings/ROOT_CAUSE.md."
+      "cause": "opendp-num adapter defect (not a dashu bug), fixed in src/backend/dashu.rs."
     },
     {
       "id": "DASHU-018",
@@ -373,7 +364,7 @@
       "reports": [
         "reports/directed_binary/f180c51b23cdc31f.json"
       ],
-      "resolution": "Resolved in opendp-num by the exact-rational directed rounding in src/backend/dashu.rs (exact RBig arithmetic + single correctly-rounded directed conversion, native prechecks removed). No longer reproduces on the fixed adapter; see findings/ROOT_CAUSE.md."
+      "cause": "opendp-num adapter defect (not a dashu bug), fixed in src/backend/dashu.rs."
     },
     {
       "id": "DASHU-019",
@@ -395,7 +386,7 @@
       "reports": [
         "reports/directed_binary/0904d42951491ab6.json"
       ],
-      "resolution": "Resolved in opendp-num by the exact-rational directed rounding in src/backend/dashu.rs (exact RBig arithmetic + single correctly-rounded directed conversion, native prechecks removed). No longer reproduces on the fixed adapter; see findings/ROOT_CAUSE.md."
+      "cause": "opendp-num adapter defect (not a dashu bug), fixed in src/backend/dashu.rs."
     }
   ]
 }

@@ -420,6 +420,7 @@ fn fbig_rat<R: dashu::float::round::Round>(value: &FBig<R>) -> RBig {
 fn eval_adaptive<T: PrimitiveRound>(
     direction: Direction,
     start_prec: usize,
+    zero_negative: bool,
     raw_at: impl Fn(usize, Direction) -> Result<RBig>,
 ) -> Result<Rounded<T>> {
     const CAP: usize = 4096;
@@ -427,7 +428,7 @@ fn eval_adaptive<T: PrimitiveRound>(
     let mut previous: Option<u64> = None;
     loop {
         let raw = raw_at(prec, direction)?;
-        let rounded = round_rational::<T>(&raw, direction, false);
+        let rounded = round_rational::<T>(&raw, direction, zero_negative);
         let bits = rounded.ident_bits();
         if previous == Some(bits) || prec >= CAP {
             // Directed transcendental/power: a non-finite bound is an overflow.
@@ -450,7 +451,7 @@ fn start_precision(value_log2_magnitude: usize) -> usize {
 }
 
 macro_rules! directed_unary {
-    ($ty:ty; $op:ty, $method:ident, $domain:expr) => {
+    ($ty:ty; $op:ty, $method:ident, $domain:expr, $zero_negative:expr) => {
         impl DirectedUnary<$op, $ty> for Dashu {
             fn eval(value: $ty, direction: Direction) -> Result<Rounded<$ty>> {
                 if !value.is_finite() {
@@ -465,7 +466,8 @@ macro_rules! directed_unary {
                     let l = value.abs().log2();
                     if l.is_finite() { l.abs().ceil() as usize } else { 0 }
                 };
-                eval_adaptive::<$ty>(direction, start_precision(magnitude), |prec, dir| {
+                let zero_negative = ($zero_negative)(value);
+                eval_adaptive::<$ty>(direction, start_precision(magnitude), zero_negative, |prec, dir| {
                     let raw = match dir {
                         Direction::Up => {
                             let x = FBig::<Up>::try_from(value)
@@ -496,12 +498,13 @@ macro_rules! directed_unary {
     };
 }
 
-directed_unary!(f64; Ln, ln, |x: f64| x > 0.0);
-directed_unary!(f32; Ln, ln, |x: f32| x > 0.0);
-directed_unary!(f64; Ln1p, ln_1p, |x: f64| x > -1.0);
-directed_unary!(f32; Ln1p, ln_1p, |x: f32| x > -1.0);
-directed_unary!(f64; Sqrt, sqrt, |x: f64| x >= 0.0);
-directed_unary!(f32; Sqrt, sqrt, |x: f32| x >= 0.0);
+// ln(1) is exactly +0; ln1p and sqrt preserve the sign of a zero result.
+directed_unary!(f64; Ln, ln, |x: f64| x > 0.0, |_x: f64| false);
+directed_unary!(f32; Ln, ln, |x: f32| x > 0.0, |_x: f32| false);
+directed_unary!(f64; Ln1p, ln_1p, |x: f64| x > -1.0, |x: f64| x.is_sign_negative());
+directed_unary!(f32; Ln1p, ln_1p, |x: f32| x > -1.0, |x: f32| x.is_sign_negative());
+directed_unary!(f64; Sqrt, sqrt, |x: f64| x >= 0.0, |x: f64| x.is_sign_negative());
+directed_unary!(f32; Sqrt, sqrt, |x: f32| x >= 0.0, |x: f32| x.is_sign_negative());
 
 /// |log2(value)| as a working-precision boost, so results near 1 (tiny input)
 /// or near a subnormal boundary resolve to the correct side.
@@ -576,9 +579,11 @@ macro_rules! directed_exp {
                         _ => Err(overflow_error()),
                     };
                 }
+                // exp is never exactly zero for finite input (underflow handled above).
                 eval_adaptive::<$ty>(
                     direction,
                     start_precision(input_magnitude(value)),
+                    false,
                     transcendental_raw!(value, exp),
                 )
             }
@@ -616,9 +621,11 @@ macro_rules! directed_expm1 {
                     };
                     return Ok(Rounded::new(output, direction));
                 }
+                // expm1 preserves the sign of a zero argument (expm1(-0) = -0).
                 eval_adaptive::<$ty>(
                     direction,
                     start_precision(input_magnitude(value)),
+                    value.is_sign_negative(),
                     transcendental_raw!(value, exp_m1),
                 )
             }
@@ -750,8 +757,23 @@ macro_rules! directed_powi {
                 if !base.is_finite() {
                     return Err(non_finite_input());
                 }
+                // A result that overflows to +/-inf is resolved from the cheap native
+                // value: the arbitrary-precision powi would otherwise hand `fbig_rat`
+                // an FBig infinity, which dashu-float panics on.
+                let native = base.powi(exponent);
+                if !native.is_finite() {
+                    return match direction {
+                        Direction::Down if native > 0.0 => {
+                            Ok(Rounded::new(<$ty>::MAX, direction))
+                        }
+                        Direction::Up if native < 0.0 => Ok(Rounded::new(<$ty>::MIN, direction)),
+                        _ => Err(overflow_error()),
+                    };
+                }
                 let exp = IBig::from(exponent);
-                eval_adaptive::<$ty>(direction, start_precision(0), |prec, dir| {
+                // A zero power result keeps base's sign only for an odd exponent.
+                let zero_negative = base.is_sign_negative() && exponent % 2 != 0;
+                eval_adaptive::<$ty>(direction, start_precision(0), zero_negative, |prec, dir| {
                     let raw = match dir {
                         Direction::Up => {
                             let b = FBig::<Up>::try_from(base)

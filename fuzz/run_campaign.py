@@ -36,6 +36,7 @@ TARGETS = (
     Target("primitive_casts", weight=2, max_len=4096, timeout=20, dictionary="integer.dict"),
     Target("alp_primitives", weight=2, max_len=64, timeout=20, dictionary="float.dict"),
     Target("opendp_sequences", weight=5, max_len=4096, timeout=25, dictionary="sequence.dict"),
+    Target("malachite_float", weight=4, max_len=4096, timeout=20, dictionary="float.dict"),
 )
 
 STOP = False
