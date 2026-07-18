@@ -40,7 +40,12 @@ def main() -> int:
                     f"{key[0]}/{key[1]}: {needle!r} not found in {source_path.relative_to(ROOT)}"
                 )
 
-    unmanifested = sorted(set(bins) - {entry["target"] for entry in manifest["operations"]})
+    # Differential targets re-check existing operations against another backend
+    # rather than adding OpenDP operations, so they are exempt from the mapping.
+    differential = set(manifest.get("differential_targets", []))
+    unmanifested = sorted(
+        set(bins) - {entry["target"] for entry in manifest["operations"]} - differential
+    )
     if unmanifested:
         errors.append("fuzz targets absent from operation manifest: " + ", ".join(unmanifested))
 

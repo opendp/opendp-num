@@ -1,5 +1,8 @@
 {
   "schema": 1,
+  "differential_targets": [
+    "malachite_float"
+  ],
   "opendp_snapshot": {
     "repository": "opendp/opendp",
     "commit": "8cc809d38ac620e42bc6ca1c7ed3a1c19b2c0b02",

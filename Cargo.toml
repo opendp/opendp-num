@@ -17,7 +17,7 @@ all-backends = ["dashu", "malachite", "mpfr"]
 [dependencies]
 dashu = { version = "0.5.0", features = ["num-traits_v02"], optional = true }
 dashu-float = { version = "=0.5.0", optional = true }
-malachite = { version = "0.9.2", optional = true }
+malachite = { git = "https://github.com/mhogrefe/malachite", branch = "master", optional = true, features = ["floats"] }
 rug = { version = "1.28", optional = true, default-features = false, features = ["integer", "rational", "float"] }
 
 [dev-dependencies]
