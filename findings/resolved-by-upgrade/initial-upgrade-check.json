@@ -1,0 +1,194 @@
+{
+  "baseline": {
+    "dashu": "0.4.3",
+    "dashu-float": "0.4.4",
+    "dashu-int": "0.4.3",
+    "dashu-ratio": "0.4.2",
+    "malachite": "0.9.2",
+    "rug": "1.30.0"
+  },
+  "failed": 6,
+  "label": "dashu-0.5.0",
+  "passed": 5,
+  "resolved_dependencies": {
+    "dashu": "0.5.0",
+    "dashu-float": "0.5.0",
+    "dashu-int": "0.5.0",
+    "dashu-ratio": "0.5.0",
+    "malachite": "0.9.2",
+    "rug": "1.30.0"
+  },
+  "results": [
+    {
+      "bytes": 21,
+      "duration_seconds": 0.466,
+      "exit_code": 0,
+      "expected": "operation=div reason=correctly rounded value differs from MPFR",
+      "finding": "DASHU-001",
+      "input": "known_inputs/DASHU-001-div.input",
+      "outcome": "not_reproduced",
+      "output_excerpt": [],
+      "reproduced": false,
+      "sha256": "17caedd6d503fab76047212f33d897dbcce7cad771168d9fe5c64b616cd2d77a",
+      "target": "directed_binary"
+    },
+    {
+      "bytes": 21,
+      "duration_seconds": 0.445,
+      "exit_code": 0,
+      "expected": "operation=mul reason=correctly rounded value differs from MPFR",
+      "finding": "DASHU-001",
+      "input": "known_inputs/DASHU-001-mul.input",
+      "outcome": "not_reproduced",
+      "output_excerpt": [],
+      "reproduced": false,
+      "sha256": "dfe4196e711a234e426d5140bb652b85331b99dd42eff0babd1adf9624ce9a86",
+      "target": "directed_binary"
+    },
+    {
+      "bytes": 21,
+      "duration_seconds": 0.44,
+      "exit_code": 0,
+      "expected": "operation=sub reason=correctly rounded value differs from MPFR",
+      "finding": "DASHU-001",
+      "input": "known_inputs/DASHU-001-sub.input",
+      "outcome": "not_reproduced",
+      "output_excerpt": [],
+      "reproduced": false,
+      "sha256": "bb0b0c82bf6593ce20a140f313b858339759266c5d020e4ab9d890c2c9df5851",
+      "target": "directed_binary"
+    },
+    {
+      "bytes": 21,
+      "duration_seconds": 0.431,
+      "exit_code": 1,
+      "expected": "operation=sub reason=correctly rounded value differs from MPFR",
+      "finding": "DASHU-002",
+      "input": "known_inputs/DASHU-002.input",
+      "outcome": "reproduced",
+      "output_excerpt": [
+        "OPENDP_NUM_VIOLATION target=directed_binary operation=sub reason=correctly rounded value differs from MPFR report=/var/folders/mq/0sn8snd12rng58mbr6wws53m0000gq/T/opendp-num-verify-b_j2n4wc/directed_binary/0c3e63d5e21a4bda.json",
+        "thread '<unnamed>' (32187428) panicked at src/lib.rs:332:5:",
+        "SUMMARY: libFuzzer: deadly signal"
+      ],
+      "reproduced": true,
+      "sha256": "d97613344280e1f19c512e07fa9c26eaeafb063529e931b32f469877a489e185",
+      "target": "directed_binary"
+    },
+    {
+      "bytes": 35,
+      "duration_seconds": 0.468,
+      "exit_code": 0,
+      "expected": "operation=rational_to_f32 reason=directed conversion differs from MPFR",
+      "finding": "DASHU-003",
+      "input": "known_inputs/DASHU-003-a.input",
+      "outcome": "not_reproduced",
+      "output_excerpt": [],
+      "reproduced": false,
+      "sha256": "aaceb8e3e3b278af4a5d5ac4efff8bac10fe753070c775bc047091edcf8876d6",
+      "target": "conversions"
+    },
+    {
+      "bytes": 82,
+      "duration_seconds": 0.442,
+      "exit_code": 0,
+      "expected": "operation=rational_to_f32 reason=directed conversion differs from MPFR",
+      "finding": "DASHU-003",
+      "input": "known_inputs/DASHU-003-b.input",
+      "outcome": "not_reproduced",
+      "output_excerpt": [],
+      "reproduced": false,
+      "sha256": "38af20a5f00f0b527a695948e7930c5c351646c7b852a845a7509f458593f647",
+      "target": "conversions"
+    },
+    {
+      "bytes": 16,
+      "duration_seconds": 0.467,
+      "exit_code": 1,
+      "expected": "exponent is too large: OutOfBounds",
+      "finding": "DASHU-004",
+      "input": "known_inputs/DASHU-004.input",
+      "outcome": "changed_failure",
+      "output_excerpt": [
+        "OPENDP_NUM_VIOLATION target=directed_unary operation=exp reason=correctly rounded value differs from MPFR report=/var/folders/mq/0sn8snd12rng58mbr6wws53m0000gq/T/opendp-num-verify-b_j2n4wc/directed_unary/0b06978bbbb750ea.json",
+        "thread '<unnamed>' (32187928) panicked at src/lib.rs:332:5:",
+        "SUMMARY: libFuzzer: deadly signal"
+      ],
+      "reproduced": false,
+      "sha256": "99320f2b34a61aad5e4d06033e667bedf636586c43e22eab344e4ac26ffb33e5",
+      "target": "directed_unary"
+    },
+    {
+      "bytes": 16,
+      "duration_seconds": 0.455,
+      "exit_code": 1,
+      "expected": "operation=expm1 reason=Dashu returned an error for a valid MPFR result",
+      "finding": "DASHU-005",
+      "input": "known_inputs/DASHU-005.input",
+      "outcome": "reproduced",
+      "output_excerpt": [
+        "OPENDP_NUM_VIOLATION target=directed_unary operation=expm1 reason=Dashu returned an error for a valid MPFR result report=/var/folders/mq/0sn8snd12rng58mbr6wws53m0000gq/T/opendp-num-verify-b_j2n4wc/directed_unary/5cc0a46bda775a02.json",
+        "thread '<unnamed>' (32188063) panicked at src/lib.rs:332:5:",
+        "SUMMARY: libFuzzer: deadly signal"
+      ],
+      "reproduced": true,
+      "sha256": "402aaa7a0ce71226ad38688f54d1b0f2a6166d592a8b77584aec3ecccbd2c224",
+      "target": "directed_unary"
+    },
+    {
+      "bytes": 16,
+      "duration_seconds": 0.418,
+      "exit_code": 1,
+      "expected": "operation=ln1p reason=correctly rounded value differs from MPFR",
+      "finding": "DASHU-006",
+      "input": "known_inputs/DASHU-006.input",
+      "outcome": "reproduced",
+      "output_excerpt": [
+        "OPENDP_NUM_VIOLATION target=directed_unary operation=ln1p reason=correctly rounded value differs from MPFR report=/var/folders/mq/0sn8snd12rng58mbr6wws53m0000gq/T/opendp-num-verify-b_j2n4wc/directed_unary/8b0bdbe20a751a93.json",
+        "thread '<unnamed>' (32188201) panicked at src/lib.rs:332:5:",
+        "SUMMARY: libFuzzer: deadly signal"
+      ],
+      "reproduced": true,
+      "sha256": "598458d43635e7e8024a5adbff0132cd56f2eb5d48493b9e737ea95500705b3c",
+      "target": "directed_unary"
+    },
+    {
+      "bytes": 119,
+      "duration_seconds": 0.424,
+      "exit_code": 1,
+      "expected": "operation=log2 reason=composed correctly rounded result differs from MPFR",
+      "finding": "DASHU-007",
+      "input": "known_inputs/DASHU-007.input",
+      "outcome": "reproduced",
+      "output_excerpt": [
+        "OPENDP_NUM_VIOLATION target=opendp_sequences operation=log2 reason=composed correctly rounded result differs from MPFR report=/var/folders/mq/0sn8snd12rng58mbr6wws53m0000gq/T/opendp-num-verify-b_j2n4wc/opendp_sequences/8a1c248eb519cf70.json",
+        "thread '<unnamed>' (32188397) panicked at src/lib.rs:332:5:",
+        "SUMMARY: libFuzzer: deadly signal"
+      ],
+      "reproduced": true,
+      "sha256": "738fa008053d1d447af5b6e85831c889880a783d0e5cb3502f91b96269ea0c53",
+      "target": "opendp_sequences"
+    },
+    {
+      "bytes": 3136,
+      "duration_seconds": 0.42,
+      "exit_code": 1,
+      "expected": "internal error: not enough memory allocated",
+      "finding": "DASHU-008",
+      "input": "known_inputs/DASHU-008.input",
+      "outcome": "reproduced",
+      "output_excerpt": [
+        "thread '<unnamed>' (32188554) panicked at /Users/shoebox/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dashu-int-0.5.0/src/memory.rs:150:14:",
+        "internal error: not enough memory allocated",
+        "SUMMARY: libFuzzer: deadly signal"
+      ],
+      "reproduced": true,
+      "sha256": "4078a4a54d400215b345560eec0bf32b986533a1d5f7c2874c792226ab608825",
+      "target": "exact_rational"
+    }
+  ],
+  "sanitizer": "none",
+  "schema": 1,
+  "timestamp_unix": 1784352695,
+  "total": 11
+}

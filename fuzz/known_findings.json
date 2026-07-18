@@ -1,0 +1,273 @@
+{
+  "schema": 1,
+  "baseline": {
+    "dashu": "0.5.0",
+    "dashu-float": "0.5.0",
+    "dashu-int": "0.5.0",
+    "dashu-ratio": "0.5.0",
+    "malachite": "0.9.2",
+    "rug": "1.30.0"
+  },
+  "campaign_limits": {
+    "exact_rational": {
+      "max_len": 3000,
+      "reason": "DASHU-008 reproduces at 3136 bytes and larger; direct reproducers remain available outside the active corpus."
+    }
+  },
+  "findings": [
+    {
+      "id": "DASHU-002",
+      "library": "dashu",
+      "title": "Downward subtraction can step one extra f64 lower",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "upstream_status": "Still reproduces with Dashu 0.5.0.",
+      "summary": "Both near f64::MAX and near 2.0, Dashu-backed downward subtraction returns one representable value below MPFR's correctly rounded result.",
+      "impact": "The returned lower bound is unnecessarily loose by one representable value and is not correctly rounded.",
+      "deduplication": "The two magnitude ranges share the same subtraction, direction, and one-extra-ULP symptom and are grouped as a normalization/rounding defect.",
+      "inputs": [
+        {"target": "directed_binary", "path": "known_inputs/DASHU-002.input", "expected": "operation=sub reason=correctly rounded value differs from MPFR"},
+        {"target": "opendp_sequences", "path": "known_inputs/DASHU-002-sequence.input", "expected": "operation=sub reason=composed correctly rounded result differs from MPFR"}
+      ],
+      "reports": [
+        "reports/directed_binary/0c3e63d5e21a4bda.json",
+        "reports/opendp_sequences/1342db672e99eee1.json"
+      ]
+    },
+    {
+      "id": "DASHU-004",
+      "library": "dashu-float",
+      "title": "Directed f32 exp underflow returns an incorrect zero or negative subnormal",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "upstream_status": "Confirmed on dashu-float 0.5.0.",
+      "summary": "At large negative finite f32 inputs, upward exp returns +0 instead of the minimum positive subnormal, while downward exp can return a negative minimum subnormal instead of +0.",
+      "impact": "The upward result is below the exact positive value, and the downward manifestation has an impossible negative sign for exp.",
+      "deduplication": "The two manifestations are grouped as one f32 exponential-underflow/sign defect. The panic seen with Dashu 0.4 is not part of this 0.5 report.",
+      "inputs": [
+        {"target": "directed_unary", "path": "known_inputs/DASHU-004.input", "expected": "operation=exp reason=correctly rounded value differs from MPFR"},
+        {"target": "directed_unary", "path": "known_inputs/DASHU-017.input", "expected": "operation=exp reason=correctly rounded value differs from MPFR"}
+      ],
+      "reports": [
+        "reports/directed_unary/0b06978bbbb750ea.json",
+        "reports/directed_unary/e1d6472181e0032a.json"
+      ]
+    },
+    {
+      "id": "DASHU-005",
+      "library": "dashu-float",
+      "title": "Downward expm1 reports overflow when f64::MAX is representable",
+      "classification": "wrong-error",
+      "confidence": "high",
+      "upstream_status": "Still reproduces with dashu-float 0.5.0.",
+      "summary": "For a large finite input under downward rounding, Dashu reports overflow while MPFR returns f64::MAX.",
+      "impact": "A valid finite directed result is rejected as an error at the overflow boundary.",
+      "deduplication": "Kept separate from the exp panic because the observable contract and failure mode differ.",
+      "inputs": [
+        {"target": "directed_unary", "path": "known_inputs/DASHU-005.input", "expected": "operation=expm1 reason=Dashu returned an error for a valid MPFR result"}
+      ],
+      "reports": ["reports/directed_unary/5cc0a46bda775a02.json"]
+    },
+    {
+      "id": "DASHU-006",
+      "library": "dashu-float",
+      "title": "Downward ln1p of the minimum subnormal rounds upward",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "upstream_status": "Still reproduces with dashu-float 0.5.0.",
+      "summary": "Downward ln1p of f64::from_bits(1) returns the same minimum subnormal, while MPFR rounds the slightly smaller exact result to +0.",
+      "impact": "The purported lower bound is above the exact result.",
+      "deduplication": "A standalone unary boundary bug with a distinct operation and output pattern.",
+      "inputs": [
+        {"target": "directed_unary", "path": "known_inputs/DASHU-006.input", "expected": "operation=ln1p reason=correctly rounded value differs from MPFR"}
+      ],
+      "reports": ["reports/directed_unary/8b0bdbe20a751a93.json"]
+    },
+    {
+      "id": "DASHU-007",
+      "library": "dashu-float",
+      "title": "Directed log2 differs from MPFR across magnitude ranges",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "upstream_status": "Still reproduces with dashu-float 0.5.0.",
+      "summary": "Dashu log2 differs from MPFR both near 2^-24 under downward rounding and at f64::MIN_POSITIVE under upward rounding.",
+      "impact": "The error is many ULPs rather than a tie-breaking or signed-zero difference.",
+      "deduplication": "The direct and sequence inputs isolate the same log2 implementation; the discrepancies vary in size but share the operation-level root.",
+      "inputs": [
+        {"target": "opendp_sequences", "path": "known_inputs/DASHU-007.input", "expected": "operation=log2 reason=composed correctly rounded result differs from MPFR"},
+        {"target": "directed_unary", "path": "known_inputs/DASHU-007-direct.input", "expected": "operation=log2 reason=correctly rounded value differs from MPFR"}
+      ],
+      "reports": [
+        "reports/opendp_sequences/8a1c248eb519cf70.json",
+        "reports/directed_unary/a646a81a4a4a3873.json"
+      ]
+    },
+    {
+      "id": "DASHU-008",
+      "library": "dashu-int",
+      "title": "Rational construction triggers internal allocation panic in GCD",
+      "classification": "panic",
+      "confidence": "high",
+      "upstream_status": "Still reproduces with dashu-int 0.5.0.",
+      "summary": "Constructing and reducing a fuzzed rational reaches dashu-int's divide-and-conquer GCD and panics with `internal error: not enough memory allocated`.",
+      "impact": "Valid large integer inputs can panic during rational normalization.",
+      "deduplication": "A unique raw backend panic identified by its dashu-int memory.rs assertion and GCD stack.",
+      "inputs": [
+        {"target": "exact_rational", "path": "known_inputs/DASHU-008.input", "expected": "internal error: not enough memory allocated"},
+        {"target": "exact_rational", "path": "known_inputs/DASHU-008-b.input", "expected": "internal error: not enough memory allocated"}
+      ],
+      "reports": []
+    },
+    {
+      "id": "DASHU-010",
+      "library": "dashu",
+      "title": "Directed division reports overflow when the correctly rounded result is exactly +/-f64::MAX",
+      "classification": "wrong-error",
+      "confidence": "high",
+      "upstream_status": "All three retained manifestations still reproduce with Dashu 0.5.0.",
+      "summary": "Dividing 1 by a tiny positive f64 under downward rounding reports overflow while MPFR returns +f64::MAX, and dividing a value near -1 by a tiny positive subnormal under upward rounding reports overflow while MPFR returns the representable -f64::MAX.",
+      "impact": "A valid finite directed result that lands exactly on the +/-f64::MAX boundary is rejected as an error rather than returned.",
+      "deduplication": "The downward/+f64::MAX and upward/-f64::MAX binary manifestations and the composed-sequence report share one root cause: the overflow check fires at the f64::MAX magnitude boundary even though the correctly rounded directed result is representable. They are grouped as one division overflow-boundary defect independent of sign and rounding direction.",
+      "inputs": [
+        {"target": "directed_binary", "path": "known_inputs/DASHU-010-direct.input", "expected": "operation=div reason=Dashu returned an error for a valid MPFR result"},
+        {"target": "directed_binary", "path": "known_inputs/DASHU-010-up.input", "expected": "operation=div reason=Dashu returned an error for a valid MPFR result"},
+        {"target": "opendp_sequences", "path": "known_inputs/DASHU-010-sequence.input", "expected": "operation=div reason=composed operation success/error behavior differs from MPFR"}
+      ],
+      "reports": [
+        "reports/directed_binary/51aebc36e2644674.json",
+        "reports/directed_binary/a97b74afcae1796a.json",
+        "reports/opendp_sequences/207d08cff0bc5202.json"
+      ]
+    },
+    {
+      "id": "DASHU-011",
+      "library": "dashu-float",
+      "title": "Downward negative power of f64::MAX returns a negative subnormal",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "upstream_status": "Still reproduces with dashu-float 0.5.0.",
+      "summary": "For powi(f64::MAX, -53) under downward rounding, Dashu returns -f64::from_bits(1), while MPFR returns +0.",
+      "impact": "The result has the wrong sign and lies on the opposite side of zero from the positive exact value.",
+      "deduplication": "A distinct powi sign/underflow defect, separate from ln1p's positive subnormal boundary error.",
+      "inputs": [
+        {"target": "directed_unary", "path": "known_inputs/DASHU-011.input", "expected": "operation=powi reason=correctly rounded value differs from MPFR"}
+      ],
+      "reports": ["reports/directed_unary/5c2b26af1ca286ec.json"]
+    },
+    {
+      "id": "DASHU-012",
+      "library": "dashu",
+      "title": "Upward addition near -1 skips one representable f64",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "upstream_status": "Confirmed on Dashu 0.5.0.",
+      "summary": "Adding the minimum positive subnormal to the f64 immediately above -1 under upward rounding returns 0xbfeffffffffffffd instead of MPFR's 0xbfeffffffffffffe.",
+      "impact": "The result is one representable value too high and is not correctly rounded.",
+      "deduplication": "A distinct addition normalization case; kept separate from subtraction near f64::MAX.",
+      "inputs": [
+        {"target": "directed_binary", "path": "known_inputs/DASHU-012.input", "expected": "operation=add reason=correctly rounded value differs from MPFR"},
+        {"target": "opendp_sequences", "path": "known_inputs/DASHU-012-sequence.input", "expected": "operation=add reason=composed correctly rounded result differs from MPFR"}
+      ],
+      "reports": [
+        "reports/directed_binary/84885098f4fa901b.json",
+        "reports/opendp_sequences/aef8a6675f36de78.json"
+      ]
+    },
+    {
+      "id": "DASHU-013",
+      "library": "dashu-float",
+      "title": "Upward expm1 of the minimum normal f64 rounds downward",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "upstream_status": "Confirmed on dashu-float 0.5.0.",
+      "summary": "Upward expm1 of f64::MIN_POSITIVE returns the input unchanged, while MPFR returns the next larger f64.",
+      "impact": "The purported upper bound is below the exact result.",
+      "deduplication": "Kept separate from the expm1 overflow error because this is a small-input rounding defect on the opposite boundary.",
+      "inputs": [
+        {"target": "directed_unary", "path": "known_inputs/DASHU-013.input", "expected": "operation=expm1 reason=correctly rounded value differs from MPFR"}
+      ],
+      "reports": ["reports/directed_unary/68ac45c29e4d106d.json"]
+    },
+    {
+      "id": "DASHU-014",
+      "library": "dashu-float",
+      "title": "Downward ln near one is one ULP too low",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "upstream_status": "Confirmed on dashu-float 0.5.0.",
+      "summary": "For input 0x3ff0000000005500 under downward rounding, Dashu ln returns one f64 below the MPFR result.",
+      "impact": "The returned bound is unnecessarily low and not correctly rounded.",
+      "deduplication": "The sequence inputs agree at the failing step, isolating a standalone ln discrepancy distinct from log2.",
+      "inputs": [
+        {"target": "opendp_sequences", "path": "known_inputs/DASHU-014.input", "expected": "operation=ln reason=composed correctly rounded result differs from MPFR"}
+      ],
+      "reports": ["reports/opendp_sequences/9da426f0f20f49c9.json"]
+    },
+    {
+      "id": "DASHU-015",
+      "library": "dashu",
+      "title": "Directed big-integer-to-f64 conversion rounds toward larger magnitude regardless of direction",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "upstream_status": "Confirmed on Dashu 0.5.0.",
+      "summary": "Converting -(2^128 - 1) to f64 under upward rounding returns -3.402823669209385e38 instead of MPFR's less-negative adjacent value, and converting +(2^128 - 1) as a natural under downward rounding returns 3.402823669209385e38 instead of MPFR's smaller adjacent value.",
+      "impact": "Around the 2^128 magnitude, Dashu's directed integer/natural conversion always rounds to the larger-magnitude neighbor, violating the requested directed bound in both directions.",
+      "deduplication": "The upward signed-integer and downward natural manifestations share the same integer conversion path and the same too-large-magnitude symptom on the same 2^128-1 magnitude, so they are grouped as one directed integer-conversion rounding defect. Kept separate from rational/nearest conversion behavior, which uses a different path and rounding mode.",
+      "inputs": [
+        {"target": "conversions", "path": "known_inputs/DASHU-015.input", "expected": "operation=integer_to_f64 reason=directed conversion differs from MPFR"},
+        {"target": "conversions", "path": "known_inputs/DASHU-015-b.input", "expected": "operation=integer_to_f64 reason=directed conversion differs from MPFR"},
+        {"target": "conversions", "path": "known_inputs/DASHU-015-natural.input", "expected": "operation=natural_to_f64 reason=directed conversion differs from MPFR"}
+      ],
+      "reports": [
+        "reports/conversions/1e80bf90ded7b7b8.json",
+        "reports/conversions/d83a59f43ee9d1ee.json",
+        "reports/conversions/ae8f47dcd91babcd.json"
+      ]
+    },
+    {
+      "id": "DASHU-016",
+      "library": "dashu",
+      "title": "Upward directed division is one ULP too high",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "upstream_status": "Confirmed on Dashu 0.5.0.",
+      "summary": "Dividing two finite f64 values near the normal/subnormal boundary under upward rounding returns one representable value above MPFR's correctly rounded result.",
+      "impact": "The result is a valid upper bound but is not the tight correctly-rounded value promised by the contract.",
+      "deduplication": "Kept separate from DASHU-010 because that finding is an erroneous overflow result rather than an in-range one-ULP discrepancy.",
+      "inputs": [
+        {"target": "directed_binary", "path": "known_inputs/DASHU-016.input", "expected": "operation=div reason=correctly rounded value differs from MPFR"}
+      ],
+      "reports": ["reports/directed_binary/762552d9d3c4caf6.json"]
+    },
+    {
+      "id": "DASHU-018",
+      "library": "dashu",
+      "title": "Adding -0 to a tiny positive f64 produces a vastly larger value",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "upstream_status": "Confirmed on Dashu 0.5.0.",
+      "summary": "Under upward rounding, adding -0 to 0x0000003ff0020000 returns 0x3d80000000000000 instead of preserving the tiny positive operand.",
+      "impact": "The output is approximately 2^-39 rather than a subnormal-scale value, a large magnitude error in a basic directed addition.",
+      "deduplication": "Kept separate from one-ULP addition findings because this result changes the exponent by hundreds of bins and specifically involves a signed-zero operand.",
+      "inputs": [
+        {"target": "directed_binary", "path": "known_inputs/DASHU-018.input", "expected": "operation=add reason=correctly rounded value differs from MPFR"}
+      ],
+      "reports": ["reports/directed_binary/f180c51b23cdc31f.json"]
+    },
+    {
+      "id": "DASHU-019",
+      "library": "dashu",
+      "title": "Directed multiply of two positive minimum subnormals returns the negative minimum subnormal",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "upstream_status": "Confirmed on Dashu 0.5.0.",
+      "summary": "Multiplying f64::from_bits(1) by itself under downward rounding returns -f64::from_bits(1) (0x8000000000000001), while MPFR returns +0. The exact product 2^-2148 is positive and underflows to +0.",
+      "impact": "The product of two positive operands is returned with a negative sign, an impossible result that lies on the wrong side of zero; downstream directed lower bounds derived from it are invalid.",
+      "deduplication": "A standalone directed multiplication sign/underflow defect. Kept separate from the exp (DASHU-004) and powi (DASHU-011) underflow-sign findings because it is the multiply operation on a different backend path, and separate from the addition and division rounding findings because those preserve sign and differ by at most one representable value.",
+      "inputs": [
+        {"target": "directed_binary", "path": "known_inputs/DASHU-019.input", "expected": "operation=mul reason=correctly rounded value differs from MPFR"}
+      ],
+      "reports": ["reports/directed_binary/0904d42951491ab6.json"]
+    }
+  ]
+}

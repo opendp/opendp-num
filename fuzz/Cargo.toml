@@ -1,0 +1,76 @@
+[package]
+name = "opendp-num-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+arbitrary = { version = "1", features = ["derive"] }
+libfuzzer-sys = "0.4"
+serde_json = "1"
+opendp-num = { path = "..", features = ["all-backends"] }
+dashu = { version = "0.5.0", features = ["num-traits_v02"] }
+malachite = "0.9.2"
+rug = { version = "1.28", default-features = false, features = ["integer", "rational", "float"] }
+
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "exact_integer"
+path = "fuzz_targets/exact_integer.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "exact_rational"
+path = "fuzz_targets/exact_rational.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "directed_unary"
+path = "fuzz_targets/directed_unary.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "directed_binary"
+path = "fuzz_targets/directed_binary.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "conversions"
+path = "fuzz_targets/conversions.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "opendp_sequences"
+path = "fuzz_targets/opendp_sequences.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "alp_primitives"
+path = "fuzz_targets/alp_primitives.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "primitive_casts"
+path = "fuzz_targets/primitive_casts.rs"
+test = false
+doc = false
+bench = false

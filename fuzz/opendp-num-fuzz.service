@@ -1,0 +1,17 @@
+[Unit]
+Description=Continuous OpenDP numeric differential fuzzing
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/opendp-num/fuzz
+ExecStart=/usr/bin/env python3 /srv/opendp-num/fuzz/run_campaign.py --sanitizer none --cmin-every 48 --log-retention-days 14
+Restart=always
+RestartSec=10
+Nice=10
+IOSchedulingClass=idle
+Environment=RUST_BACKTRACE=1
+Environment=OPENDP_NUM_FUZZ_REPORT_DIR=/srv/opendp-num/fuzz/reports
+
+[Install]
+WantedBy=multi-user.target

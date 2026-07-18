@@ -1,0 +1,15 @@
+{
+  "context": {
+    "dashu": "Ok(Rounded { value: 3.402823669209385e38, direction: Down })",
+    "direction": "Down",
+    "mpfr": "Ok(Rounded { value: 3.4028236692093843e38, direction: Down })",
+    "natural": "340282366920938463463374607431768211455"
+  },
+  "input_hex": "3a00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001f00000049494949494949494949494949fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8ffff00",
+  "operation": "natural_to_f64",
+  "reason": "directed conversion differs from MPFR",
+  "reproducer": "/Users/shoebox/OpenDP/opendp-num/fuzz/reports/conversions/ae8f47dcd91babcd.input",
+  "schema": 1,
+  "target": "conversions",
+  "timestamp_unix": 1784353421
+}

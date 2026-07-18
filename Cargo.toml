@@ -1,0 +1,29 @@
+[package]
+name = "opendp-num"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT"
+description = "Backend-neutral numerical capability contracts for OpenDP"
+publish = false
+
+[features]
+default = ["dashu"]
+dashu = ["dep:dashu", "dep:dashu-float"]
+malachite = ["dep:malachite"]
+mpfr = ["dep:rug"]
+all-backends = ["dashu", "malachite", "mpfr"]
+
+[dependencies]
+dashu = { version = "0.5.0", features = ["num-traits_v02"], optional = true }
+dashu-float = { version = "=0.5.0", optional = true }
+malachite = { version = "0.9.2", optional = true }
+rug = { version = "1.28", optional = true, default-features = false, features = ["integer", "rational", "float"] }
+
+[dev-dependencies]
+criterion = "0.6"
+proptest = "1.7"
+
+[[bench]]
+name = "backends"
+harness = false

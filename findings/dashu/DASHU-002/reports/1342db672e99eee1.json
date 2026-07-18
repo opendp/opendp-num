@@ -1,0 +1,21 @@
+{
+  "context": {
+    "dashu_input": "2.00146484375 (0x4000030000000000)",
+    "dashu_output": "2.001464843749999 (0x400002fffffffffe)",
+    "direction": "Down",
+    "exponent": "-53",
+    "mpfr_input": "2.00146484375 (0x4000030000000000)",
+    "mpfr_output": "2.0014648437499996 (0x400002ffffffffff)",
+    "operand": "0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007458340731200207 (0x1ff0000000000000)",
+    "operation": "sub",
+    "step": "1",
+    "trace": "start(0x3ff0060000000000) -> add[Down](0x4000030000000000)"
+  },
+  "input_hex": "1f000000000006f03f001f010000000000f03f011f000000000000f01fffff00000000f03f001f00000000003f000000000000f03f0a0000",
+  "operation": "sub",
+  "reason": "composed correctly rounded result differs from MPFR",
+  "reproducer": "/Users/shoebox/OpenDP/opendp-num/fuzz/reports/opendp_sequences/1342db672e99eee1.input",
+  "schema": 1,
+  "target": "opendp_sequences",
+  "timestamp_unix": 1784353865
+}

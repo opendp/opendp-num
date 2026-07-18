@@ -1,0 +1,440 @@
+{
+  "schema": 1,
+  "opendp_snapshot": {
+    "repository": "opendp/opendp",
+    "commit": "8cc809d38ac620e42bc6ca1c7ed3a1c19b2c0b02",
+    "audited_areas": [
+      "rust/src/traits/arithmetic/mod.rs",
+      "rust/src/traits/cast/mod.rs",
+      "rust/src/traits/samplers/cks20/mod.rs",
+      "rust/src/traits/samplers/uniform/mod.rs",
+      "rust/src/measurements/alp/mod.rs",
+      "rust/src/measurements/canonical_noise/mod.rs"
+    ]
+  },
+  "operations": [
+    {
+      "family": "integer",
+      "name": "signed_add",
+      "target": "exact_integer",
+      "needles": [
+        "\"add\""
+      ]
+    },
+    {
+      "family": "integer",
+      "name": "signed_sub",
+      "target": "exact_integer",
+      "needles": [
+        "\"sub\""
+      ]
+    },
+    {
+      "family": "integer",
+      "name": "signed_mul",
+      "target": "exact_integer",
+      "needles": [
+        "\"mul\""
+      ]
+    },
+    {
+      "family": "integer",
+      "name": "signed_neg",
+      "target": "exact_integer",
+      "needles": [
+        "\"neg\""
+      ]
+    },
+    {
+      "family": "integer",
+      "name": "signed_abs",
+      "target": "exact_integer",
+      "needles": [
+        "\"abs\""
+      ]
+    },
+    {
+      "family": "integer",
+      "name": "signed_compare",
+      "target": "exact_integer",
+      "needles": [
+        "\"compare\""
+      ]
+    },
+    {
+      "family": "natural",
+      "name": "division",
+      "target": "exact_integer",
+      "needles": [
+        "\"natural_div\""
+      ]
+    },
+    {
+      "family": "natural",
+      "name": "remainder",
+      "target": "exact_integer",
+      "needles": [
+        "\"natural_rem\""
+      ]
+    },
+    {
+      "family": "natural",
+      "name": "euclidean_gcd",
+      "target": "exact_integer",
+      "needles": [
+        "\"gcd_euclid\""
+      ]
+    },
+    {
+      "family": "natural",
+      "name": "from_be_bytes",
+      "target": "exact_integer",
+      "needles": [
+        "from_be_bytes"
+      ]
+    },
+    {
+      "family": "natural",
+      "name": "bit_length",
+      "target": "exact_integer",
+      "needles": [
+        "bit_len"
+      ]
+    },
+    {
+      "family": "rational",
+      "name": "canonical_from_into_parts",
+      "target": "exact_rational",
+      "needles": [
+        "\"canonical_parts\""
+      ]
+    },
+    {
+      "family": "rational",
+      "name": "add",
+      "target": "exact_rational",
+      "needles": [
+        "\"add\""
+      ]
+    },
+    {
+      "family": "rational",
+      "name": "sub",
+      "target": "exact_rational",
+      "needles": [
+        "\"sub\""
+      ]
+    },
+    {
+      "family": "rational",
+      "name": "mul",
+      "target": "exact_rational",
+      "needles": [
+        "\"mul\""
+      ]
+    },
+    {
+      "family": "rational",
+      "name": "checked_div",
+      "target": "exact_rational",
+      "needles": [
+        "CheckedBinary<Div"
+      ]
+    },
+    {
+      "family": "rational",
+      "name": "neg",
+      "target": "exact_rational",
+      "needles": [
+        "\"neg\""
+      ]
+    },
+    {
+      "family": "rational",
+      "name": "floor",
+      "target": "exact_rational",
+      "needles": [
+        "\"floor\""
+      ]
+    },
+    {
+      "family": "rational",
+      "name": "round_to_nearest_ties_away",
+      "target": "exact_rational",
+      "needles": [
+        "\"round_away_from_zero\""
+      ]
+    },
+    {
+      "family": "rational",
+      "name": "square_powi_two",
+      "target": "exact_rational",
+      "needles": [
+        "\"pow2\""
+      ]
+    },
+    {
+      "family": "rational",
+      "name": "compare",
+      "target": "exact_rational",
+      "needles": [
+        "\"compare\""
+      ]
+    },
+    {
+      "family": "directed_binary",
+      "name": "add_f32_f64",
+      "target": "directed_binary",
+      "needles": [
+        "run_f64::<Add>",
+        "run_f32::<Add>"
+      ]
+    },
+    {
+      "family": "directed_binary",
+      "name": "sub_f32_f64",
+      "target": "directed_binary",
+      "needles": [
+        "run_f64::<Sub>",
+        "run_f32::<Sub>"
+      ]
+    },
+    {
+      "family": "directed_binary",
+      "name": "mul_f32_f64",
+      "target": "directed_binary",
+      "needles": [
+        "run_f64::<Mul>",
+        "run_f32::<Mul>"
+      ]
+    },
+    {
+      "family": "directed_binary",
+      "name": "div_f32_f64",
+      "target": "directed_binary",
+      "needles": [
+        "run_f64::<Div>",
+        "run_f32::<Div>"
+      ]
+    },
+    {
+      "family": "directed_unary",
+      "name": "ln_f32_f64",
+      "target": "directed_unary",
+      "needles": [
+        "run_unary_f64::<Ln>",
+        "run_unary_f32::<Ln>"
+      ]
+    },
+    {
+      "family": "directed_unary",
+      "name": "log2_f32_f64",
+      "target": "directed_unary",
+      "needles": [
+        "run_unary_f64::<Log2>",
+        "run_unary_f32::<Log2>"
+      ]
+    },
+    {
+      "family": "directed_unary",
+      "name": "ln1p_f32_f64",
+      "target": "directed_unary",
+      "needles": [
+        "run_unary_f64::<Ln1p>",
+        "run_unary_f32::<Ln1p>"
+      ]
+    },
+    {
+      "family": "directed_unary",
+      "name": "exp_f32_f64",
+      "target": "directed_unary",
+      "needles": [
+        "run_unary_f64::<Exp>",
+        "run_unary_f32::<Exp>"
+      ]
+    },
+    {
+      "family": "directed_unary",
+      "name": "expm1_f32_f64",
+      "target": "directed_unary",
+      "needles": [
+        "run_unary_f64::<ExpM1>",
+        "run_unary_f32::<ExpM1>"
+      ]
+    },
+    {
+      "family": "directed_unary",
+      "name": "sqrt_f32_f64",
+      "target": "directed_unary",
+      "needles": [
+        "run_unary_f64::<Sqrt>",
+        "run_unary_f32::<Sqrt>"
+      ]
+    },
+    {
+      "family": "directed_unary",
+      "name": "integer_power_f32_f64",
+      "target": "directed_unary",
+      "needles": [
+        "run_powi_f64",
+        "run_powi_f32"
+      ]
+    },
+    {
+      "family": "conversion",
+      "name": "rational_to_f64",
+      "target": "conversions",
+      "needles": [
+        "\"rational_to_f64\""
+      ]
+    },
+    {
+      "family": "conversion",
+      "name": "rational_to_f32",
+      "target": "conversions",
+      "needles": [
+        "\"rational_to_f32\""
+      ]
+    },
+    {
+      "family": "conversion",
+      "name": "integer_to_f64",
+      "target": "conversions",
+      "needles": [
+        "\"integer_to_f64\""
+      ]
+    },
+    {
+      "family": "conversion",
+      "name": "integer_to_f32",
+      "target": "conversions",
+      "needles": [
+        "\"integer_to_f32\""
+      ]
+    },
+    {
+      "family": "conversion",
+      "name": "natural_to_f64",
+      "target": "conversions",
+      "needles": [
+        "\"natural_to_f64\""
+      ]
+    },
+    {
+      "family": "conversion",
+      "name": "natural_to_f32",
+      "target": "conversions",
+      "needles": [
+        "\"natural_to_f32\""
+      ]
+    },
+    {
+      "family": "conversion",
+      "name": "exact_f64_to_rational",
+      "target": "conversions",
+      "needles": [
+        "\"f64_to_rational\""
+      ]
+    },
+    {
+      "family": "conversion",
+      "name": "exact_f32_to_rational",
+      "target": "conversions",
+      "needles": [
+        "\"f32_to_rational\""
+      ]
+    },
+    {
+      "family": "conversion",
+      "name": "directed_f64_to_f32",
+      "target": "conversions",
+      "needles": [
+        "\"f64_to_f32\""
+      ]
+    },
+    {
+      "family": "conversion",
+      "name": "integer_exact_to_primitive",
+      "target": "primitive_casts",
+      "needles": [
+        "\"integer_exact_to_primitive\""
+      ]
+    },
+    {
+      "family": "conversion",
+      "name": "integer_saturating_to_primitive",
+      "target": "primitive_casts",
+      "needles": [
+        "\"integer_saturating_to_primitive\""
+      ]
+    },
+    {
+      "family": "conversion",
+      "name": "natural_exact_to_primitive",
+      "target": "primitive_casts",
+      "needles": [
+        "\"natural_exact_to_primitive\""
+      ]
+    },
+    {
+      "family": "conversion",
+      "name": "natural_saturating_to_primitive",
+      "target": "primitive_casts",
+      "needles": [
+        "\"natural_saturating_to_primitive\""
+      ]
+    },
+    {
+      "family": "alp",
+      "name": "precision_truncation_down_up_zero",
+      "target": "alp_primitives",
+      "needles": [
+        "fuzz_precision_rounding",
+        "with_precision"
+      ]
+    },
+    {
+      "family": "alp",
+      "name": "floor_fraction_decomposition",
+      "target": "alp_primitives",
+      "needles": [
+        "fuzz_floor_fraction",
+        "check_floor_fraction"
+      ]
+    },
+    {
+      "family": "alp",
+      "name": "upward_reciprocal_probability",
+      "target": "alp_primitives",
+      "needles": [
+        "fuzz_reciprocal_probability"
+      ]
+    },
+    {
+      "family": "alp",
+      "name": "exact_parameter_comparison",
+      "target": "alp_primitives",
+      "needles": [
+        "fuzz_parameter_comparison"
+      ]
+    },
+    {
+      "family": "alp",
+      "name": "scale_round_pipeline",
+      "target": "alp_primitives",
+      "needles": [
+        "fuzz_scale_round_pipeline"
+      ]
+    },
+    {
+      "family": "composition",
+      "name": "all_directed_ops_in_sequences",
+      "target": "opendp_sequences",
+      "needles": [
+        "control % 11",
+        "dispatch_dashu",
+        "dispatch_mpfr"
+      ]
+    }
+  ]
+}

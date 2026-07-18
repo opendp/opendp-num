@@ -1,0 +1,16 @@
+{
+  "context": {
+    "dashu": "Ok(Rounded { value: -0.052233517, direction: Nearest })",
+    "denominator": "4231",
+    "direction": "Nearest",
+    "mpfr": "Ok(Rounded { value: -0.052233513, direction: Nearest })",
+    "numerator": "-221"
+  },
+  "input_hex": "01011f00ffdddddddddddd27ddddd5104987c0ffffff7effffff27ffffffffffffffff",
+  "operation": "rational_to_f32",
+  "reason": "directed conversion differs from MPFR",
+  "reproducer": "/Users/shoebox/OpenDP/opendp-num/fuzz/reports/conversions/519d48469e3caa59.input",
+  "schema": 1,
+  "target": "conversions",
+  "timestamp_unix": 1784347612
+}

@@ -1,0 +1,382 @@
+{
+  "baseline": {
+    "dashu": "0.5.0",
+    "dashu-float": "0.5.0",
+    "dashu-int": "0.5.0",
+    "dashu-ratio": "0.5.0",
+    "malachite": "0.9.2",
+    "rug": "1.30.0"
+  },
+  "findings": [
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "directory": "findings/dashu/DASHU-002",
+      "id": "DASHU-002",
+      "inputs": [
+        {
+          "bytes": 21,
+          "expected": "operation=sub reason=correctly rounded value differs from MPFR",
+          "path": "findings/dashu/DASHU-002/inputs/DASHU-002.input",
+          "sha256": "d97613344280e1f19c512e07fa9c26eaeafb063529e931b32f469877a489e185",
+          "target": "directed_binary"
+        },
+        {
+          "bytes": 56,
+          "expected": "operation=sub reason=composed correctly rounded result differs from MPFR",
+          "path": "findings/dashu/DASHU-002/inputs/DASHU-002-sequence.input",
+          "sha256": "e9c35e00f18ed36a5d691f13e39bbfb4d3fa99be8e8f7f7a58bbe4450db8acb4",
+          "target": "opendp_sequences"
+        }
+      ],
+      "library": "dashu",
+      "reports": [
+        "findings/dashu/DASHU-002/reports/0c3e63d5e21a4bda.json",
+        "findings/dashu/DASHU-002/reports/1342db672e99eee1.json"
+      ],
+      "title": "Downward subtraction can step one extra f64 lower"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "directory": "findings/dashu-float/DASHU-004",
+      "id": "DASHU-004",
+      "inputs": [
+        {
+          "bytes": 16,
+          "expected": "operation=exp reason=correctly rounded value differs from MPFR",
+          "path": "findings/dashu-float/DASHU-004/inputs/DASHU-004.input",
+          "sha256": "99320f2b34a61aad5e4d06033e667bedf636586c43e22eab344e4ac26ffb33e5",
+          "target": "directed_unary"
+        },
+        {
+          "bytes": 16,
+          "expected": "operation=exp reason=correctly rounded value differs from MPFR",
+          "path": "findings/dashu-float/DASHU-004/inputs/DASHU-017.input",
+          "sha256": "950388e2a9c85a3e755ed8903e2e6429a3803de34144a6692a3146dc4c2bc292",
+          "target": "directed_unary"
+        }
+      ],
+      "library": "dashu-float",
+      "reports": [
+        "findings/dashu-float/DASHU-004/reports/0b06978bbbb750ea.json",
+        "findings/dashu-float/DASHU-004/reports/e1d6472181e0032a.json"
+      ],
+      "title": "Directed f32 exp underflow returns an incorrect zero or negative subnormal"
+    },
+    {
+      "classification": "wrong-error",
+      "confidence": "high",
+      "directory": "findings/dashu-float/DASHU-005",
+      "id": "DASHU-005",
+      "inputs": [
+        {
+          "bytes": 16,
+          "expected": "operation=expm1 reason=Dashu returned an error for a valid MPFR result",
+          "path": "findings/dashu-float/DASHU-005/inputs/DASHU-005.input",
+          "sha256": "402aaa7a0ce71226ad38688f54d1b0f2a6166d592a8b77584aec3ecccbd2c224",
+          "target": "directed_unary"
+        }
+      ],
+      "library": "dashu-float",
+      "reports": [
+        "findings/dashu-float/DASHU-005/reports/5cc0a46bda775a02.json"
+      ],
+      "title": "Downward expm1 reports overflow when f64::MAX is representable"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "directory": "findings/dashu-float/DASHU-006",
+      "id": "DASHU-006",
+      "inputs": [
+        {
+          "bytes": 16,
+          "expected": "operation=ln1p reason=correctly rounded value differs from MPFR",
+          "path": "findings/dashu-float/DASHU-006/inputs/DASHU-006.input",
+          "sha256": "598458d43635e7e8024a5adbff0132cd56f2eb5d48493b9e737ea95500705b3c",
+          "target": "directed_unary"
+        }
+      ],
+      "library": "dashu-float",
+      "reports": [
+        "findings/dashu-float/DASHU-006/reports/8b0bdbe20a751a93.json"
+      ],
+      "title": "Downward ln1p of the minimum subnormal rounds upward"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "directory": "findings/dashu-float/DASHU-007",
+      "id": "DASHU-007",
+      "inputs": [
+        {
+          "bytes": 119,
+          "expected": "operation=log2 reason=composed correctly rounded result differs from MPFR",
+          "path": "findings/dashu-float/DASHU-007/inputs/DASHU-007.input",
+          "sha256": "738fa008053d1d447af5b6e85831c889880a783d0e5cb3502f91b96269ea0c53",
+          "target": "opendp_sequences"
+        },
+        {
+          "bytes": 16,
+          "expected": "operation=log2 reason=correctly rounded value differs from MPFR",
+          "path": "findings/dashu-float/DASHU-007/inputs/DASHU-007-direct.input",
+          "sha256": "f3e1b32e5cd854b919a2bf8a501262d914e4f90dab16c56a2a9f8f95ed1f277a",
+          "target": "directed_unary"
+        }
+      ],
+      "library": "dashu-float",
+      "reports": [
+        "findings/dashu-float/DASHU-007/reports/8a1c248eb519cf70.json",
+        "findings/dashu-float/DASHU-007/reports/a646a81a4a4a3873.json"
+      ],
+      "title": "Directed log2 differs from MPFR across magnitude ranges"
+    },
+    {
+      "classification": "panic",
+      "confidence": "high",
+      "directory": "findings/dashu-int/DASHU-008",
+      "id": "DASHU-008",
+      "inputs": [
+        {
+          "bytes": 3136,
+          "expected": "internal error: not enough memory allocated",
+          "path": "findings/dashu-int/DASHU-008/inputs/DASHU-008.input",
+          "sha256": "4078a4a54d400215b345560eec0bf32b986533a1d5f7c2874c792226ab608825",
+          "target": "exact_rational"
+        },
+        {
+          "bytes": 4005,
+          "expected": "internal error: not enough memory allocated",
+          "path": "findings/dashu-int/DASHU-008/inputs/DASHU-008-b.input",
+          "sha256": "c4aa7ce3dc1650e56a295419082487a28174c1191b66c5d375ef5ad8eabad719",
+          "target": "exact_rational"
+        }
+      ],
+      "library": "dashu-int",
+      "reports": [],
+      "title": "Rational construction triggers internal allocation panic in GCD"
+    },
+    {
+      "classification": "wrong-error",
+      "confidence": "high",
+      "directory": "findings/dashu/DASHU-010",
+      "id": "DASHU-010",
+      "inputs": [
+        {
+          "bytes": 16,
+          "expected": "operation=div reason=Dashu returned an error for a valid MPFR result",
+          "path": "findings/dashu/DASHU-010/inputs/DASHU-010-direct.input",
+          "sha256": "5fb655feb6c0b4056fa240d6f32b1a803be4e76e75f964270ccb4d72f47608bb",
+          "target": "directed_binary"
+        },
+        {
+          "bytes": 17,
+          "expected": "operation=div reason=Dashu returned an error for a valid MPFR result",
+          "path": "findings/dashu/DASHU-010/inputs/DASHU-010-up.input",
+          "sha256": "a4225336d5f216ba2e48b7ea8352c1b42250966ffef67ba5e777be1a3e0a4a1b",
+          "target": "directed_binary"
+        },
+        {
+          "bytes": 85,
+          "expected": "operation=div reason=composed operation success/error behavior differs from MPFR",
+          "path": "findings/dashu/DASHU-010/inputs/DASHU-010-sequence.input",
+          "sha256": "a7512d1e5e10d5b5f70d45307b7228a62d914f042a6d1c1e17c5bcf1e4b025b6",
+          "target": "opendp_sequences"
+        }
+      ],
+      "library": "dashu",
+      "reports": [
+        "findings/dashu/DASHU-010/reports/51aebc36e2644674.json",
+        "findings/dashu/DASHU-010/reports/a97b74afcae1796a.json",
+        "findings/dashu/DASHU-010/reports/207d08cff0bc5202.json"
+      ],
+      "title": "Directed division reports overflow when the correctly rounded result is exactly +/-f64::MAX"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "directory": "findings/dashu-float/DASHU-011",
+      "id": "DASHU-011",
+      "inputs": [
+        {
+          "bytes": 16,
+          "expected": "operation=powi reason=correctly rounded value differs from MPFR",
+          "path": "findings/dashu-float/DASHU-011/inputs/DASHU-011.input",
+          "sha256": "b77aabab6bbe6181c0646fa1bad7d6aba8448cb4164926454e0e5b8f3d597d4e",
+          "target": "directed_unary"
+        }
+      ],
+      "library": "dashu-float",
+      "reports": [
+        "findings/dashu-float/DASHU-011/reports/5c2b26af1ca286ec.json"
+      ],
+      "title": "Downward negative power of f64::MAX returns a negative subnormal"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "directory": "findings/dashu/DASHU-012",
+      "id": "DASHU-012",
+      "inputs": [
+        {
+          "bytes": 21,
+          "expected": "operation=add reason=correctly rounded value differs from MPFR",
+          "path": "findings/dashu/DASHU-012/inputs/DASHU-012.input",
+          "sha256": "2ac064056c89fcc4c1f25d21aeb4cf7a62a9c4df056862d60d8e3a3f9070069d",
+          "target": "directed_binary"
+        },
+        {
+          "bytes": 64,
+          "expected": "operation=add reason=composed correctly rounded result differs from MPFR",
+          "path": "findings/dashu/DASHU-012/inputs/DASHU-012-sequence.input",
+          "sha256": "6b33c11111eefc08c39f5f1348234622ca995a9403631a42c83ff14cea8d5768",
+          "target": "opendp_sequences"
+        }
+      ],
+      "library": "dashu",
+      "reports": [
+        "findings/dashu/DASHU-012/reports/84885098f4fa901b.json",
+        "findings/dashu/DASHU-012/reports/aef8a6675f36de78.json"
+      ],
+      "title": "Upward addition near -1 skips one representable f64"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "directory": "findings/dashu-float/DASHU-013",
+      "id": "DASHU-013",
+      "inputs": [
+        {
+          "bytes": 16,
+          "expected": "operation=expm1 reason=correctly rounded value differs from MPFR",
+          "path": "findings/dashu-float/DASHU-013/inputs/DASHU-013.input",
+          "sha256": "1f9e74b0a4ddf85bb4041457db9f01bad5ca588568b16543c605aa6fa99d127d",
+          "target": "directed_unary"
+        }
+      ],
+      "library": "dashu-float",
+      "reports": [
+        "findings/dashu-float/DASHU-013/reports/68ac45c29e4d106d.json"
+      ],
+      "title": "Upward expm1 of the minimum normal f64 rounds downward"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "directory": "findings/dashu-float/DASHU-014",
+      "id": "DASHU-014",
+      "inputs": [
+        {
+          "bytes": 119,
+          "expected": "operation=ln reason=composed correctly rounded result differs from MPFR",
+          "path": "findings/dashu-float/DASHU-014/inputs/DASHU-014.input",
+          "sha256": "ebd2454fff1799826b0d63e384bfc23eeb7bc53b34f35ba873bb5878affb773f",
+          "target": "opendp_sequences"
+        }
+      ],
+      "library": "dashu-float",
+      "reports": [
+        "findings/dashu-float/DASHU-014/reports/9da426f0f20f49c9.json"
+      ],
+      "title": "Downward ln near one is one ULP too low"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "directory": "findings/dashu/DASHU-015",
+      "id": "DASHU-015",
+      "inputs": [
+        {
+          "bytes": 126,
+          "expected": "operation=integer_to_f64 reason=directed conversion differs from MPFR",
+          "path": "findings/dashu/DASHU-015/inputs/DASHU-015.input",
+          "sha256": "5c9f513e3b755ed1645882b132b8a689708d8130bf64c9941529ca3c51ac1967",
+          "target": "conversions"
+        },
+        {
+          "bytes": 150,
+          "expected": "operation=integer_to_f64 reason=directed conversion differs from MPFR",
+          "path": "findings/dashu/DASHU-015/inputs/DASHU-015-b.input",
+          "sha256": "b1d7c89eb4cc5fddd7e98b9d9ac9eb29ea18050a398be3ebb15e9a1b6239e191",
+          "target": "conversions"
+        },
+        {
+          "bytes": 161,
+          "expected": "operation=natural_to_f64 reason=directed conversion differs from MPFR",
+          "path": "findings/dashu/DASHU-015/inputs/DASHU-015-natural.input",
+          "sha256": "c30a3afeb043e000da6fb628873bf298cdd0ae341b653f78df034f4282e30302",
+          "target": "conversions"
+        }
+      ],
+      "library": "dashu",
+      "reports": [
+        "findings/dashu/DASHU-015/reports/1e80bf90ded7b7b8.json",
+        "findings/dashu/DASHU-015/reports/d83a59f43ee9d1ee.json",
+        "findings/dashu/DASHU-015/reports/ae8f47dcd91babcd.json"
+      ],
+      "title": "Directed big-integer-to-f64 conversion rounds toward larger magnitude regardless of direction"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "directory": "findings/dashu/DASHU-016",
+      "id": "DASHU-016",
+      "inputs": [
+        {
+          "bytes": 21,
+          "expected": "operation=div reason=correctly rounded value differs from MPFR",
+          "path": "findings/dashu/DASHU-016/inputs/DASHU-016.input",
+          "sha256": "7fdf3255576459a4dc57c78ed4a08f798974203f84d197d74c52d3c271cba219",
+          "target": "directed_binary"
+        }
+      ],
+      "library": "dashu",
+      "reports": [
+        "findings/dashu/DASHU-016/reports/762552d9d3c4caf6.json"
+      ],
+      "title": "Upward directed division is one ULP too high"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "directory": "findings/dashu/DASHU-018",
+      "id": "DASHU-018",
+      "inputs": [
+        {
+          "bytes": 18,
+          "expected": "operation=add reason=correctly rounded value differs from MPFR",
+          "path": "findings/dashu/DASHU-018/inputs/DASHU-018.input",
+          "sha256": "1a1ce3103149b39247c6c81000c148ea4962a1f4e1c3f787df81ac288491bc55",
+          "target": "directed_binary"
+        }
+      ],
+      "library": "dashu",
+      "reports": [
+        "findings/dashu/DASHU-018/reports/f180c51b23cdc31f.json"
+      ],
+      "title": "Adding -0 to a tiny positive f64 produces a vastly larger value"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "directory": "findings/dashu/DASHU-019",
+      "id": "DASHU-019",
+      "inputs": [
+        {
+          "bytes": 11,
+          "expected": "operation=mul reason=correctly rounded value differs from MPFR",
+          "path": "findings/dashu/DASHU-019/inputs/DASHU-019.input",
+          "sha256": "949d8f50bf63fc665c43dac8a070e19a9131421abfc7c573a0832af330c10904",
+          "target": "directed_binary"
+        }
+      ],
+      "library": "dashu",
+      "reports": [
+        "findings/dashu/DASHU-019/reports/0904d42951491ab6.json"
+      ],
+      "title": "Directed multiply of two positive minimum subnormals returns the negative minimum subnormal"
+    }
+  ],
+  "schema": 1
+}

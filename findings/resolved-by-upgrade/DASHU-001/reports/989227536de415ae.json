@@ -1,0 +1,19 @@
+{
+  "context": {
+    "dashu": "0 (0x0000000000000000)",
+    "direction": "Up",
+    "format": "f64",
+    "lhs": "-0",
+    "lhs_bits": "0x8000000000000000",
+    "mpfr": "-0 (0x8000000000000000)",
+    "rhs": "1",
+    "rhs_bits": "0x3ff0000000000000"
+  },
+  "input_hex": "0003011f1f0000000000000080000000000000f03f",
+  "operation": "div",
+  "reason": "correctly rounded value differs from MPFR",
+  "reproducer": "/Users/shoebox/OpenDP/opendp-num/fuzz/reports/directed_binary/989227536de415ae.input",
+  "schema": 1,
+  "target": "directed_binary",
+  "timestamp_unix": 1784351672
+}

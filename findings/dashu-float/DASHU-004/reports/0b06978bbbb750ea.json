@@ -1,0 +1,18 @@
+{
+  "context": {
+    "dashu": "0 (0x00000000)",
+    "direction": "Up",
+    "exponent": "-53",
+    "format": "f32",
+    "mpfr": "0.000000000000000000000000000000000000000000001 (0x00000001)",
+    "value": "-166303900000000000000000000000000000000",
+    "value_bits": "0xfefa39ef"
+  },
+  "input_hex": "0103011fef39fafe422e8640feffffff",
+  "operation": "exp",
+  "reason": "correctly rounded value differs from MPFR",
+  "reproducer": "/tmp/opendp-d004-report/directed_unary/0b06978bbbb750ea.input",
+  "schema": 1,
+  "target": "directed_unary",
+  "timestamp_unix": 1784353638
+}

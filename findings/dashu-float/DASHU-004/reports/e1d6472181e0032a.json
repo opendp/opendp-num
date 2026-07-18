@@ -1,0 +1,18 @@
+{
+  "context": {
+    "dashu": "-0.000000000000000000000000000000000000000000001 (0x80000001)",
+    "direction": "Down",
+    "exponent": "-53",
+    "format": "f32",
+    "mpfr": "0 (0x00000000)",
+    "value": "-11901439000000",
+    "value_bits": "0xd52d3051"
+  },
+  "input_hex": "0103001f51302dd5104987c0feffffff",
+  "operation": "exp",
+  "reason": "correctly rounded value differs from MPFR",
+  "reproducer": "/Users/shoebox/OpenDP/opendp-num/fuzz/reports/directed_unary/e1d6472181e0032a.input",
+  "schema": 1,
+  "target": "directed_unary",
+  "timestamp_unix": 1784353152
+}

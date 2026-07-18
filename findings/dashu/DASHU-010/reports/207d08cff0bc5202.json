@@ -1,0 +1,21 @@
+{
+  "context": {
+    "dashu_input": "1 (0x3ff0000000000000)",
+    "dashu_output": "Err(Error { kind: Overflow, message: \"operation produced a non-finite value\" })",
+    "direction": "Down",
+    "exponent": "-53",
+    "mpfr_input": "1 (0x3ff0000000000000)",
+    "mpfr_output": "Ok(Rounded { value: 1.7976931348623157e308, direction: Down })",
+    "operand": "0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000168555425485195 (0x00001f073ff00000)",
+    "operation": "div",
+    "step": "3",
+    "trace": "start(0x3ff0000000000000) -> add[Down](0x3ff0000000000000) -> add[Down](0x3ff0000000000000) -> mul[Down](0x3ff0000000000000)"
+  },
+  "input_hex": "1f000000000000f03f001f0000000000000000000000f03f0a0000f03f021f000000000000f03f031f0000f03f071f000000000000f03f081f000000000000f03f091f000000000000f03f0a1f000000000000f03f",
+  "operation": "div",
+  "reason": "composed operation success/error behavior differs from MPFR",
+  "reproducer": "/Users/shoebox/OpenDP/opendp-num/fuzz/reports/opendp_sequences/207d08cff0bc5202.input",
+  "schema": 1,
+  "target": "opendp_sequences",
+  "timestamp_unix": 1784352870
+}

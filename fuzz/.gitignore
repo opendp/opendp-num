@@ -1,0 +1,8 @@
+/target/
+/artifacts/
+/logs/
+/reports/
+/quarantine/
+/fuzz/
+/corpus/
+/.DS_Store
