@@ -180,6 +180,19 @@
       "owner": "backend",
       "reports": [],
       "title": "Exact primitive zero converts to an unlimited-precision FBig that exact transcendental special cases reject"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "contract": "backend_conformance",
+      "directory": "findings/dashu-float/DASHU-023",
+      "id": "DASHU-023",
+      "inputs": [],
+      "library": "dashu-float",
+      "masked_by_adapter": true,
+      "owner": "backend",
+      "reports": [],
+      "title": "Upward exp_m1 returns Exact(-1) when range reduction exceeds isize"
     }
   ],
   "schema": 1

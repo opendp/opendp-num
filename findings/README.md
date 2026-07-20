@@ -10,6 +10,7 @@ These are conservatively deduplicated findings from differential and property fu
 | [DASHU-020](dashu-float/DASHU-020/) | dashu-float | backend_conformance | incorrect-result | FBig and DBig double-round values adjacent to primitive subnormal halfways |
 | [DASHU-021](dashu-float/DASHU-021/) | dashu-float | backend_conformance | panic | High-precision DBig to primitive conversion panics with debug assertions |
 | [DASHU-022](dashu-float/DASHU-022/) | dashu-float | backend_conformance | panic | Exact primitive zero converts to an unlimited-precision FBig that exact transcendental special cases reject |
+| [DASHU-023](dashu-float/DASHU-023/) | dashu-float | backend_conformance | incorrect-result | Upward exp_m1 returns Exact(-1) when range reduction exceeds isize |
 
 ## Reproduce everything
 

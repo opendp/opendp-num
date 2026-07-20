@@ -34,7 +34,7 @@ Reproduced directly against the library API; see the command above.
 
 ## Deduplication rationale
 
-One shared precision-state root cause: exact public zero/one representations carry Context::new(0), while multiple operations check assert_limited_precision before their exact special-case branches. The four zero operations and the ONE/ln manifestation are grouped together; the separate exp, exp_m1, and powi saturation candidates from PR #2801 did not reproduce in raw FBig and are not findings.
+One shared precision-state root cause: exact public zero/one representations carry Context::new(0), while multiple operations check assert_limited_precision before their exact special-case branches. The four zero operations and the ONE/ln manifestation are grouped together. Premature exp and powi saturation did not reproduce while their exact results remained in FBig range; the distinct astronomical exp_m1 directed-rounding defect is tracked as DASHU-023.
 
 ## Reporting note
 

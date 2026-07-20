@@ -15,8 +15,8 @@ from pathlib import Path
 REPOSITORY = Path(__file__).resolve().parent.parent
 AUDIT_SOURCE = REPOSITORY / "examples" / "audit_dashu_pr2801.rs"
 EXPECTED = (
-    "PR2801 audit: precision-state issue reproduced; exp, exp_m1, and powi "
-    "saturation candidates did not reproduce in raw FBig"
+    "PR2801 audit: DASHU-022 and DASHU-023 reproduced; no premature exp or powi "
+    "saturation while the exact result remains in FBig range"
 )
 
 

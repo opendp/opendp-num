@@ -41,6 +41,23 @@ fn assert_upward_expm1_stays_above_negative_one() {
     }
 }
 
+fn assert_astronomical_range_behavior() {
+    // -2^63 is a finite, exactly represented input, but floor(x / ln(2)) does
+    // not fit isize. Dashu explicitly saturates exp and exp_m1 at this point.
+    let up = FBig::<Up>::from_parts(-IBig::ONE, 63);
+    let down = FBig::<Down>::from_parts(-IBig::ONE, 63);
+    assert_eq!(up.precision(), 1);
+    assert!(up.exp().repr().significand().is_zero());
+    assert!(down.exp().repr().significand().is_zero());
+    assert_eq!(up.exp_m1(), FBig::<Up>::NEG_ONE);
+    assert_eq!(down.exp_m1(), FBig::<Down>::NEG_ONE);
+
+    // For finite x, exp_m1(x) > -1. Here exp(x) < 1/2, so the correct
+    // precision-1 upward result is the adjacent representable value -1/2.
+    let expected_up = FBig::<Up>::from_parts(-IBig::ONE, -1);
+    assert_ne!(up.exp_m1(), expected_up);
+}
+
 fn assert_exact_power<R: dashu::float::round::Round>(
     base: f64,
     exponent: IBig,
@@ -88,10 +105,11 @@ fn main() {
     assert_exp_remains_positive::<Up>();
     assert_exp_remains_positive::<Down>();
     assert_upward_expm1_stays_above_negative_one();
+    assert_astronomical_range_behavior();
     audit_power_mode::<Up>();
     audit_power_mode::<Down>();
 
     println!(
-        "PR2801 audit: precision-state issue reproduced; exp, exp_m1, and powi saturation candidates did not reproduce in raw FBig"
+        "PR2801 audit: DASHU-022 and DASHU-023 reproduced; no premature exp or powi saturation while the exact result remains in FBig range"
     );
 }
