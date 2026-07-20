@@ -382,11 +382,7 @@ fn round_rational<T: PrimitiveRound>(q: &RBig, direction: Direction, zero_negati
             let hi_rat = hi.to_rat().expect("hi finite in range");
             let dist_lo = q - &lo_rat;
             let dist_hi = &hi_rat - q;
-            let pick = if dist_lo < dist_hi {
-                lo
-            } else if dist_hi < dist_lo {
-                hi
-            } else if lo.low_bit_set() {
+            let pick = if dist_hi < dist_lo || (dist_hi == dist_lo && lo.low_bit_set()) {
                 hi
             } else {
                 lo
@@ -870,7 +866,7 @@ macro_rules! directed_powi {
                                 f64::NEG_INFINITY
                             }
                         });
-                    if magnitude_log2 > 1200.0 || magnitude_log2 < -1200.0 {
+                    if !magnitude_log2.is_nan() && !(-1200.0..=1200.0).contains(&magnitude_log2) {
                         return extreme_power::<$ty>(
                             base.is_sign_negative() && odd,
                             magnitude_log2.is_sign_positive(),

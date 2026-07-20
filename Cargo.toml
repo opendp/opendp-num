@@ -27,3 +27,7 @@ proptest = "1.7"
 [[bench]]
 name = "backends"
 harness = false
+
+[[example]]
+name = "root_cause"
+required-features = ["dashu", "mpfr"]
