@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import os
+import shlex
 import subprocess
 import tempfile
 import time
@@ -46,6 +47,36 @@ def main() -> int:
     failures = 0
     with tempfile.TemporaryDirectory(prefix="opendp-num-verify-") as report_dir:
         for finding in payload["findings"]:
+            if not finding["inputs"] and finding.get("direct_reproduction"):
+                command = shlex.split(finding["direct_reproduction"])
+                expected = finding.get("direct_expected", "")
+                started = time.monotonic()
+                result = subprocess.run(
+                    command,
+                    cwd=ROOT.parent,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    errors="replace",
+                    check=False,
+                )
+                duration = time.monotonic() - started
+                reproduced = result.returncode == 0 and expected in result.stdout
+                failures += not reproduced
+                results.append({
+                    "finding": finding["id"],
+                    "target": "direct_provider_reproducer",
+                    "input": None,
+                    "sha256": None,
+                    "bytes": None,
+                    "expected": expected,
+                    "reproduced": reproduced,
+                    "outcome": "reproduced" if reproduced else "not_reproduced",
+                    "exit_code": result.returncode,
+                    "duration_seconds": round(duration, 3),
+                    "output_excerpt": interesting_excerpt(result.stdout, expected),
+                })
+                print(f"{finding['id']} direct provider reproducer: {'PASS' if reproduced else 'FAIL'}")
             for item in finding["inputs"]:
                 path = registry.parent / item["path"]
                 command = [

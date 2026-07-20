@@ -124,7 +124,7 @@ fn dispatch_dashu(
         7 => <Dashu as DirectedUnary<Exp, f64>>::eval(value, direction),
         8 => <Dashu as DirectedUnary<ExpM1, f64>>::eval(value, direction),
         9 => <Dashu as DirectedUnary<Sqrt, f64>>::eval(value, direction),
-        _ => <Dashu as DirectedPowI<f64>>::eval(value, exponent, direction),
+        _ => <Dashu as DirectedPowI<f64>>::eval(value, &exponent, direction),
     }
 }
 
@@ -146,7 +146,7 @@ fn dispatch_mpfr(
         7 => <Mpfr as DirectedUnary<Exp, f64>>::eval(value, direction),
         8 => <Mpfr as DirectedUnary<ExpM1, f64>>::eval(value, direction),
         9 => <Mpfr as DirectedUnary<Sqrt, f64>>::eval(value, direction),
-        _ => <Mpfr as DirectedPowI<f64>>::eval(value, exponent, direction),
+        _ => <Mpfr as DirectedPowI<f64>>::eval(value, &exponent, direction),
     }
 }
 

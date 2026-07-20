@@ -4,6 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 python3 check_coverage.py
 python3 seed_corpus.py
+python3 verify_backend_profiles.py
 
 FUZZ_SANITIZER="${FUZZ_SANITIZER:-none}"
 
@@ -13,6 +14,7 @@ for target in \
   directed_unary \
   directed_binary \
   conversions \
+  backend_float_conversion \
   primitive_casts \
   alp_primitives \
   opendp_sequences

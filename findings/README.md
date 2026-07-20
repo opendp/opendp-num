@@ -2,11 +2,13 @@
 
 These are conservatively deduplicated findings from differential and property fuzzing of `opendp-num`. Raw runner failures are intentionally excluded: every listed reproducer must pass `fuzz/verify_findings.py` on the locked baseline.
 
-| ID | Library | Kind | Finding |
-|---|---|---|---|
-| [DASHU-007](dashu-float/DASHU-007/) | dashu-float | incorrect-result | Directed log2 differs from MPFR across magnitude ranges |
-| [DASHU-008](dashu-int/DASHU-008/) | dashu-int | panic | Rational construction triggers internal allocation panic in GCD |
-| [DASHU-015](dashu/DASHU-015/) | dashu | incorrect-result | IBig/UBig to_f64 reports an inexact conversion as Exact and rounds to the wrong side |
+| ID | Library | Contract | Kind | Finding |
+|---|---|---|---|---|
+| [DASHU-007](dashu-float/DASHU-007/) | dashu-float | uniformity | incorrect-result | Directed log2 differs from MPFR across magnitude ranges |
+| [DASHU-008](dashu-int/DASHU-008/) | dashu-int | uniformity | panic | Rational reduction: Lehmer GCD reaches Burnikel-Ziegler division that overflows a pre-sized scratchpad |
+| [DASHU-015](dashu/DASHU-015/) | dashu | backend_conformance | incorrect-result | IBig/UBig to_f64 reports an inexact conversion as Exact and rounds to the wrong side |
+| [DASHU-020](dashu-float/DASHU-020/) | dashu-float | backend_conformance | incorrect-result | FBig and DBig double-round values adjacent to primitive subnormal halfways |
+| [DASHU-021](dashu-float/DASHU-021/) | dashu-float | backend_conformance | panic | High-precision DBig to primitive conversion panics with debug assertions |
 
 ## Reproduce everything
 

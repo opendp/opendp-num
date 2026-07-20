@@ -2,6 +2,8 @@
 
 The `findings/` tree is a curated layer over raw libFuzzer artifacts. It is designed for upstream maintainers, not as a dump of every process that exited nonzero.
 
+Each active finding is classified as either a `uniformity` violation of the public backend-neutral contract or a `backend_conformance` violation found by directly probing a provider API. Backend probes remain publishable when an adapter masks the problem because they explain workarounds, guard dependency upgrades, and localize ownership.
+
 ## Admission criteria
 
 A finding is listed only when its retained input reproduces on the locked dependency baseline and the observed failure identity matches the registry. MPFR-backed comparisons are bit-for-bit for primitive directed operations. Exact arithmetic uses independent backends or mathematical identities.
@@ -11,6 +13,8 @@ Raw infrastructure failures, cancelled workers, and minimization attempts that d
 ## Deduplication
 
 Mechanical grouping starts with the target, operation, contract, output pattern, and first backend stack frame. A semantic pass then groups manifestations only when they plausibly share one correction. Ambiguous cases remain separate. Every finding README states its grouping rationale so maintainers can split or merge it.
+
+The owner is recorded independently as `backend`, `adapter`, `contract_design`, `oracle`, `harness`, or `resource_behavior`. Contract category says where the failure was observed; owner says what must change.
 
 ## Minimization
 

@@ -33,8 +33,11 @@ pub trait DirectedBinary<Op, T> {
 }
 
 /// Correctly directed primitive power with a signed integer exponent.
-pub trait DirectedPowI<T> {
-    fn eval(base: T, exponent: i32, direction: Direction) -> Result<Rounded<T>>;
+///
+/// `E` is provider-native so the contract does not silently narrow an
+/// arbitrary-precision exponent before the backend sees it.
+pub trait DirectedPowI<T, E: ?Sized = i32> {
+    fn eval(base: T, exponent: &E, direction: Direction) -> Result<Rounded<T>>;
 }
 
 /// Conversion with an explicit rounding contract.

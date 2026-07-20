@@ -79,8 +79,7 @@ fn main() {
     check_bits("DASHU-019 mul Down", r.value.to_bits(), 0x0000000000000000);
 
     // DASHU-006: ln1p(2^-1074), Down -> +0
-    let r =
-        <Dashu as DirectedUnary<Ln1p, f64>>::eval(f64::from_bits(1), Direction::Down).unwrap();
+    let r = <Dashu as DirectedUnary<Ln1p, f64>>::eval(f64::from_bits(1), Direction::Down).unwrap();
     check_bits("DASHU-006 ln1p Down", r.value.to_bits(), 0x0000000000000000);
 
     // DASHU-013: expm1(2^-1022), Up -> next f64 above min-normal
@@ -92,20 +91,28 @@ fn main() {
     check_bits("DASHU-013 expm1 Up", r.value.to_bits(), 0x0010000000000001);
 
     // DASHU-011: powi(f64::MAX, -53), Down -> +0 (positive underflow, never negative)
-    let r = <Dashu as DirectedPowI<f64>>::eval(f64::MAX, -53, Direction::Down).unwrap();
+    let r = <Dashu as DirectedPowI<f64>>::eval(f64::MAX, &-53, Direction::Down).unwrap();
     check_bits("DASHU-011 powi Down", r.value.to_bits(), 0x0000000000000000);
 
     // DASHU-015: (-(2^128 - 1)) -> f64, Up
     let n: IBig = (IBig::from(1) << 128) - IBig::from(1);
     let r = <Dashu as Convert<IBig, f64>>::convert(&(-n), Direction::Up).unwrap();
-    check_bits("DASHU-015 int->f64 Up", r.value.to_bits(), 0xc7efffffffffffff);
+    check_bits(
+        "DASHU-015 int->f64 Up",
+        r.value.to_bits(),
+        0xc7efffffffffffff,
+    );
 
     // DASHU-004 (f32): exp underflow. Up -> min positive subnormal; Down -> +0.
     let up = <Dashu as DirectedUnary<Exp, f32>>::eval(f32::from_bits(0xfefa39ef), Direction::Up)
         .unwrap();
     println!(
         "  [{}] DASHU-004 exp f32 Up: got 0x{:08x} want 0x00000001",
-        if up.value.to_bits() == 0x00000001 { "PASS" } else { "FAIL" },
+        if up.value.to_bits() == 0x00000001 {
+            "PASS"
+        } else {
+            "FAIL"
+        },
         up.value.to_bits()
     );
     assert_eq!(up.value.to_bits(), 0x00000001, "DASHU-004 Up");
@@ -114,7 +121,11 @@ fn main() {
             .unwrap();
     println!(
         "  [{}] DASHU-004 exp f32 Down: got 0x{:08x} want 0x00000000",
-        if down.value.to_bits() == 0x00000000 { "PASS" } else { "FAIL" },
+        if down.value.to_bits() == 0x00000000 {
+            "PASS"
+        } else {
+            "FAIL"
+        },
         down.value.to_bits()
     );
     assert_eq!(down.value.to_bits(), 0x00000000, "DASHU-004 Down");
@@ -123,7 +134,11 @@ fn main() {
 
     // +0 + (-0), Down -> -0 (IEEE: cancellation sign is - only under Down).
     let r = <Dashu as DirectedBinary<Add, f64>>::eval(0.0, -0.0, Direction::Down).unwrap();
-    check_bits("signed-zero add Down", r.value.to_bits(), 0x8000000000000000);
+    check_bits(
+        "signed-zero add Down",
+        r.value.to_bits(),
+        0x8000000000000000,
+    );
     // +0 + (-0), Up -> +0.
     let r = <Dashu as DirectedBinary<Add, f64>>::eval(0.0, -0.0, Direction::Up).unwrap();
     check_bits("signed-zero add Up", r.value.to_bits(), 0x0000000000000000);
@@ -151,7 +166,11 @@ fn main() {
     )
     .unwrap();
     let r = <Dashu as Convert<_, f64>>::convert(&third, Direction::Nearest).unwrap();
-    check_bits("1/3 -> f64 Nearest", r.value.to_bits(), (1.0f64 / 3.0).to_bits());
+    check_bits(
+        "1/3 -> f64 Nearest",
+        r.value.to_bits(),
+        (1.0f64 / 3.0).to_bits(),
+    );
 
     // Signed zero of sign-preserving transcendentals (found by continued fuzzing):
     // ln1p(-0), expm1(-0), sqrt(-0) all keep the negative zero.
@@ -164,10 +183,10 @@ fn main() {
 
     // powi overflow must return a clean Overflow error / saturate, not panic on an
     // FBig infinity: 2^2000 far exceeds f64::MAX.
-    let r = <Dashu as DirectedPowI<f64>>::eval(2.0, 2000, Direction::Down).unwrap();
+    let r = <Dashu as DirectedPowI<f64>>::eval(2.0, &2000, Direction::Down).unwrap();
     check_bits("powi overflow Down", r.value.to_bits(), f64::MAX.to_bits());
     assert!(
-        <Dashu as DirectedPowI<f64>>::eval(2.0, 2000, Direction::Up).is_err(),
+        <Dashu as DirectedPowI<f64>>::eval(2.0, &2000, Direction::Up).is_err(),
         "powi overflow Up should be an Overflow error"
     );
     println!("  [PASS] powi overflow Up: Overflow error");

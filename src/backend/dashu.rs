@@ -1,7 +1,7 @@
 use core::panic::UnwindSafe;
 
 use dashu::{
-    base::EstimatedLog2,
+    base::{BitTest, EstimatedLog2},
     float::{
         FBig,
         round::mode::{Down, HalfEven, Up},
@@ -103,6 +103,29 @@ fn overflow_error() -> Error {
     Error::new(ErrorKind::Overflow, "operation produced a non-finite value")
 }
 
+fn extreme_power<T: PrimitiveRound + SignBit>(
+    negative: bool,
+    overflow: bool,
+    direction: Direction,
+) -> Result<Rounded<T>> {
+    if overflow {
+        return match direction {
+            Direction::Down if !negative => Ok(Rounded::new(T::max_finite(), direction)),
+            Direction::Up if negative => Ok(Rounded::new(T::neg_max_finite(), direction)),
+            _ => Err(overflow_error()),
+        };
+    }
+
+    let output = match direction {
+        Direction::Nearest => T::signed_zero(negative),
+        Direction::Down if negative => T::min_pos_subnormal().neg(),
+        Direction::Down => T::signed_zero(false),
+        Direction::Up if negative => T::signed_zero(true),
+        Direction::Up => T::min_pos_subnormal(),
+    };
+    Ok(Rounded::new(output, direction))
+}
+
 // ---------------------------------------------------------------------------
 // Correctly rounded directed conversion of an exact rational to a primitive
 // float.
@@ -155,7 +178,11 @@ impl PrimitiveRound for f64 {
         f64::from_bits(1)
     }
     fn infinity(negative: bool) -> Self {
-        if negative { f64::NEG_INFINITY } else { f64::INFINITY }
+        if negative {
+            f64::NEG_INFINITY
+        } else {
+            f64::INFINITY
+        }
     }
     fn signed_zero(negative: bool) -> Self {
         if negative { -0.0 } else { 0.0 }
@@ -211,7 +238,11 @@ impl PrimitiveRound for f32 {
         f32::from_bits(1)
     }
     fn infinity(negative: bool) -> Self {
-        if negative { f32::NEG_INFINITY } else { f32::INFINITY }
+        if negative {
+            f32::NEG_INFINITY
+        } else {
+            f32::INFINITY
+        }
     }
     fn signed_zero(negative: bool) -> Self {
         if negative { -0.0 } else { 0.0 }
@@ -288,7 +319,11 @@ fn round_rational<T: PrimitiveRound>(q: &RBig, direction: Direction, zero_negati
             Direction::Up => T::infinity(false),
             Direction::Nearest => {
                 let half_ulp = (&max_rat - &max.next_down().to_rat().expect("finite")) / rbig_two();
-                if (q - &max_rat) > half_ulp { T::infinity(false) } else { max }
+                if (q - &max_rat) > half_ulp {
+                    T::infinity(false)
+                } else {
+                    max
+                }
             }
         };
     }
@@ -299,8 +334,13 @@ fn round_rational<T: PrimitiveRound>(q: &RBig, direction: Direction, zero_negati
             Direction::Up => neg_max,
             Direction::Down => T::infinity(true),
             Direction::Nearest => {
-                let half_ulp = (&neg_max.next_up().to_rat().expect("finite") - &neg_max_rat) / rbig_two();
-                if (&neg_max_rat - q) > half_ulp { T::infinity(true) } else { neg_max }
+                let half_ulp =
+                    (&neg_max.next_up().to_rat().expect("finite") - &neg_max_rat) / rbig_two();
+                if (&neg_max_rat - q) > half_ulp {
+                    T::infinity(true)
+                } else {
+                    neg_max
+                }
             }
         };
     }
@@ -326,7 +366,13 @@ fn round_rational<T: PrimitiveRound>(q: &RBig, direction: Direction, zero_negati
     if lo_rat == *q {
         return lo;
     }
-    let fix_zero = |v: T| if v.is_zero() { T::signed_zero(negative) } else { v };
+    let fix_zero = |v: T| {
+        if v.is_zero() {
+            T::signed_zero(negative)
+        } else {
+            v
+        }
+    };
 
     match direction {
         Direction::Down => fix_zero(lo),
@@ -464,35 +510,44 @@ macro_rules! directed_unary {
                     0usize
                 } else {
                     let l = value.abs().log2();
-                    if l.is_finite() { l.abs().ceil() as usize } else { 0 }
+                    if l.is_finite() {
+                        l.abs().ceil() as usize
+                    } else {
+                        0
+                    }
                 };
                 let zero_negative = ($zero_negative)(value);
-                eval_adaptive::<$ty>(direction, start_precision(magnitude), zero_negative, |prec, dir| {
-                    let raw = match dir {
-                        Direction::Up => {
-                            let x = FBig::<Up>::try_from(value)
-                                .map_err(|_| non_finite_input())?
-                                .with_precision(prec)
-                                .value();
-                            fbig_rat(&catch_backend(|| x.$method())?)
-                        }
-                        Direction::Down => {
-                            let x = FBig::<Down>::try_from(value)
-                                .map_err(|_| non_finite_input())?
-                                .with_precision(prec)
-                                .value();
-                            fbig_rat(&catch_backend(|| x.$method())?)
-                        }
-                        Direction::Nearest => {
-                            let x = FBig::<HalfEven>::try_from(value)
-                                .map_err(|_| non_finite_input())?
-                                .with_precision(prec)
-                                .value();
-                            fbig_rat(&catch_backend(|| x.$method())?)
-                        }
-                    };
-                    Ok(raw)
-                })
+                eval_adaptive::<$ty>(
+                    direction,
+                    start_precision(magnitude),
+                    zero_negative,
+                    |prec, dir| {
+                        let raw = match dir {
+                            Direction::Up => {
+                                let x = FBig::<Up>::try_from(value)
+                                    .map_err(|_| non_finite_input())?
+                                    .with_precision(prec)
+                                    .value();
+                                fbig_rat(&catch_backend(|| x.$method())?)
+                            }
+                            Direction::Down => {
+                                let x = FBig::<Down>::try_from(value)
+                                    .map_err(|_| non_finite_input())?
+                                    .with_precision(prec)
+                                    .value();
+                                fbig_rat(&catch_backend(|| x.$method())?)
+                            }
+                            Direction::Nearest => {
+                                let x = FBig::<HalfEven>::try_from(value)
+                                    .map_err(|_| non_finite_input())?
+                                    .with_precision(prec)
+                                    .value();
+                                fbig_rat(&catch_backend(|| x.$method())?)
+                            }
+                        };
+                        Ok(raw)
+                    },
+                )
             }
         }
     };
@@ -514,7 +569,11 @@ fn input_magnitude<T: Into<f64>>(value: T) -> usize {
         return 0;
     }
     let l = v.abs().log2();
-    if l.is_finite() { l.abs().ceil() as usize } else { 0 }
+    if l.is_finite() {
+        l.abs().ceil() as usize
+    } else {
+        0
+    }
 }
 
 macro_rules! transcendental_raw {
@@ -573,9 +632,10 @@ macro_rules! directed_exp {
                 if !native.is_finite() {
                     // Overflow: true value exceeds max_finite.
                     return match direction {
-                        Direction::Down => {
-                            Ok(Rounded::new(<$ty as PrimitiveRound>::max_finite(), direction))
-                        }
+                        Direction::Down => Ok(Rounded::new(
+                            <$ty as PrimitiveRound>::max_finite(),
+                            direction,
+                        )),
                         _ => Err(overflow_error()),
                     };
                 }
@@ -607,9 +667,10 @@ macro_rules! directed_expm1 {
                 let native: $ty = value.exp_m1();
                 if !native.is_finite() {
                     return match direction {
-                        Direction::Down => {
-                            Ok(Rounded::new(<$ty as PrimitiveRound>::max_finite(), direction))
-                        }
+                        Direction::Down => Ok(Rounded::new(
+                            <$ty as PrimitiveRound>::max_finite(),
+                            direction,
+                        )),
                         _ => Err(overflow_error()),
                     };
                 }
@@ -670,7 +731,10 @@ macro_rules! directed_log2 {
                         ));
                     }
                 };
-                Ok(Rounded::new(round_rational::<$ty>(&bound, direction, false), direction))
+                Ok(Rounded::new(
+                    round_rational::<$ty>(&bound, direction, false),
+                    direction,
+                ))
             }
         }
     };
@@ -723,14 +787,26 @@ trait SignBit: Copy {
     fn neg(self) -> Self;
 }
 impl SignBit for f64 {
-    fn is_zero(self) -> bool { self == 0.0 }
-    fn sign_negative(self) -> bool { self.is_sign_negative() }
-    fn neg(self) -> Self { -self }
+    fn is_zero(self) -> bool {
+        self == 0.0
+    }
+    fn sign_negative(self) -> bool {
+        self.is_sign_negative()
+    }
+    fn neg(self) -> Self {
+        -self
+    }
 }
 impl SignBit for f32 {
-    fn is_zero(self) -> bool { self == 0.0 }
-    fn sign_negative(self) -> bool { self.is_sign_negative() }
-    fn neg(self) -> Self { -self }
+    fn is_zero(self) -> bool {
+        self == 0.0
+    }
+    fn sign_negative(self) -> bool {
+        self.is_sign_negative()
+    }
+    fn neg(self) -> Self {
+        -self
+    }
 }
 
 macro_rules! directed_binary_all {
@@ -752,27 +828,58 @@ directed_binary_all!(f32);
 
 macro_rules! directed_powi {
     ($ty:ty) => {
-        impl DirectedPowI<$ty> for Dashu {
-            fn eval(base: $ty, exponent: i32, direction: Direction) -> Result<Rounded<$ty>> {
+        impl DirectedPowI<$ty, IBig> for Dashu {
+            fn eval(base: $ty, exponent: &IBig, direction: Direction) -> Result<Rounded<$ty>> {
                 if !base.is_finite() {
                     return Err(non_finite_input());
                 }
+                if base == 0.0 && exponent < &IBig::ZERO {
+                    return Err(Error::new(
+                        ErrorKind::DivisionByZero,
+                        "zero to a negative power",
+                    ));
+                }
+                let odd = exponent.clone().into_parts().1.bit(0);
+
                 // A result that overflows to +/-inf is resolved from the cheap native
                 // value: the arbitrary-precision powi would otherwise hand `fbig_rat`
                 // an FBig infinity, which dashu-float panics on.
-                let native = base.powi(exponent);
-                if !native.is_finite() {
-                    return match direction {
-                        Direction::Down if native > 0.0 => {
-                            Ok(Rounded::new(<$ty>::MAX, direction))
-                        }
-                        Direction::Up if native < 0.0 => Ok(Rounded::new(<$ty>::MIN, direction)),
-                        _ => Err(overflow_error()),
+                if let Ok(small_exponent) = i32::try_from(exponent) {
+                    let native = base.powi(small_exponent);
+                    if !native.is_finite() {
+                        return extreme_power::<$ty>(native.is_sign_negative(), true, direction);
+                    }
+                } else if base.abs() == 1.0 {
+                    let output = if base.is_sign_negative() && odd {
+                        -1.0
+                    } else {
+                        1.0
                     };
+                    return Ok(Rounded::new(output, direction));
+                } else if base != 0.0 {
+                    // Outside i32, retain exact evaluation near one. Only classify a
+                    // result structurally when it is separated from the primitive
+                    // overflow/underflow boundary by a large logarithmic margin.
+                    let exponent_f64 = i64::try_from(exponent).ok().map(|value| value as f64);
+                    let magnitude_log2 = exponent_f64
+                        .map(|value| value * base.abs().log2() as f64)
+                        .unwrap_or_else(|| {
+                            if (exponent > &IBig::ZERO) == (base.abs() > 1.0) {
+                                f64::INFINITY
+                            } else {
+                                f64::NEG_INFINITY
+                            }
+                        });
+                    if magnitude_log2 > 1200.0 || magnitude_log2 < -1200.0 {
+                        return extreme_power::<$ty>(
+                            base.is_sign_negative() && odd,
+                            magnitude_log2.is_sign_positive(),
+                            direction,
+                        );
+                    }
                 }
-                let exp = IBig::from(exponent);
                 // A zero power result keeps base's sign only for an odd exponent.
-                let zero_negative = base.is_sign_negative() && exponent % 2 != 0;
+                let zero_negative = base.is_sign_negative() && odd;
                 eval_adaptive::<$ty>(direction, start_precision(0), zero_negative, |prec, dir| {
                     let raw = match dir {
                         Direction::Up => {
@@ -780,25 +887,31 @@ macro_rules! directed_powi {
                                 .map_err(|_| non_finite_input())?
                                 .with_precision(prec)
                                 .value();
-                            fbig_rat(&catch_backend(|| b.powi(exp.clone()))?)
+                            fbig_rat(&catch_backend(|| b.powi(exponent.clone()))?)
                         }
                         Direction::Down => {
                             let b = FBig::<Down>::try_from(base)
                                 .map_err(|_| non_finite_input())?
                                 .with_precision(prec)
                                 .value();
-                            fbig_rat(&catch_backend(|| b.powi(exp.clone()))?)
+                            fbig_rat(&catch_backend(|| b.powi(exponent.clone()))?)
                         }
                         Direction::Nearest => {
                             let b = FBig::<HalfEven>::try_from(base)
                                 .map_err(|_| non_finite_input())?
                                 .with_precision(prec)
                                 .value();
-                            fbig_rat(&catch_backend(|| b.powi(exp.clone()))?)
+                            fbig_rat(&catch_backend(|| b.powi(exponent.clone()))?)
                         }
                     };
                     Ok(raw)
                 })
+            }
+        }
+
+        impl DirectedPowI<$ty, i32> for Dashu {
+            fn eval(base: $ty, exponent: &i32, direction: Direction) -> Result<Rounded<$ty>> {
+                <Self as DirectedPowI<$ty, IBig>>::eval(base, &IBig::from(*exponent), direction)
             }
         }
     };
@@ -819,7 +932,10 @@ macro_rules! convert_to_primitive {
                 // Exact-number conversion saturates to +/-inf on overflow, exactly
                 // like MPFR's to_fXX_round; it does not raise an overflow error.
                 let exact: RBig = ($to_rat)(value);
-                Ok(Rounded::new(round_rational::<$to>(&exact, direction, false), direction))
+                Ok(Rounded::new(
+                    round_rational::<$to>(&exact, direction, false),
+                    direction,
+                ))
             }
         }
     };

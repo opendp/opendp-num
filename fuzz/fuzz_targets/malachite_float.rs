@@ -65,7 +65,10 @@ fn conversion(case: &ConversionCase, data: &[u8]) {
         0 => {
             let mal = Integer::from_str(&signed).unwrap();
             let rug = rug::Integer::from_str(&signed).unwrap();
-            let f = vec![("integer", signed.clone()), ("direction", format!("{direction:?}"))];
+            let f = vec![
+                ("integer", signed.clone()),
+                ("direction", format!("{direction:?}")),
+            ];
             if f64_out {
                 compare64(
                     "integer_to_f64",
@@ -87,7 +90,10 @@ fn conversion(case: &ConversionCase, data: &[u8]) {
         1 => {
             let mal = Natural::from_str(&unsigned).unwrap();
             let rug = rug::Integer::from_str(&unsigned).unwrap();
-            let f = vec![("natural", unsigned.clone()), ("direction", format!("{direction:?}"))];
+            let f = vec![
+                ("natural", unsigned.clone()),
+                ("direction", format!("{direction:?}")),
+            ];
             if f64_out {
                 compare64(
                     "natural_to_f64",
@@ -141,7 +147,6 @@ fn conversion(case: &ConversionCase, data: &[u8]) {
         }
     }
 }
-
 
 fn binary(case: &BinaryCase, data: &[u8]) {
     let direction = any_direction(case.direction);
@@ -204,10 +209,10 @@ fn powi(case: &UnaryCase, data: &[u8]) {
         let mut f = fields64(&[("base", base)], direction);
         f.push(("exponent", exponent.to_string()));
         let mal = catch_backend(TARGET, "powi", data, &f, || {
-            <Malachite as DirectedPowI<f64>>::eval(base, exponent, direction)
+            <Malachite as DirectedPowI<f64>>::eval(base, &exponent, direction)
         });
         let mpfr = catch_backend(TARGET, "powi", data, &f, || {
-            <Mpfr as DirectedPowI<f64>>::eval(base, exponent, direction)
+            <Mpfr as DirectedPowI<f64>>::eval(base, &exponent, direction)
         });
         compare64("powi", data, &f, mal, mpfr);
     } else {
@@ -215,10 +220,10 @@ fn powi(case: &UnaryCase, data: &[u8]) {
         let mut f = fields32(&[("base", base)], direction);
         f.push(("exponent", exponent.to_string()));
         let mal = catch_backend(TARGET, "powi", data, &f, || {
-            <Malachite as DirectedPowI<f32>>::eval(base, exponent, direction)
+            <Malachite as DirectedPowI<f32>>::eval(base, &exponent, direction)
         });
         let mpfr = catch_backend(TARGET, "powi", data, &f, || {
-            <Mpfr as DirectedPowI<f32>>::eval(base, exponent, direction)
+            <Mpfr as DirectedPowI<f32>>::eval(base, &exponent, direction)
         });
         compare32("powi", data, &f, mal, mpfr);
     }
@@ -260,8 +265,9 @@ where
     let mal = catch_backend(TARGET, op, data, f, || {
         <Malachite as DirectedUnary<Op, f64>>::eval(x, d)
     });
-    let mpfr =
-        catch_backend(TARGET, op, data, f, || <Mpfr as DirectedUnary<Op, f64>>::eval(x, d));
+    let mpfr = catch_backend(TARGET, op, data, f, || {
+        <Mpfr as DirectedUnary<Op, f64>>::eval(x, d)
+    });
     compare64(op, data, f, mal, mpfr);
 }
 
@@ -273,12 +279,19 @@ where
     let mal = catch_backend(TARGET, op, data, f, || {
         <Malachite as DirectedUnary<Op, f32>>::eval(x, d)
     });
-    let mpfr =
-        catch_backend(TARGET, op, data, f, || <Mpfr as DirectedUnary<Op, f32>>::eval(x, d));
+    let mpfr = catch_backend(TARGET, op, data, f, || {
+        <Mpfr as DirectedUnary<Op, f32>>::eval(x, d)
+    });
     compare32(op, data, f, mal, mpfr);
 }
 
-fn compare64(op: &str, data: &[u8], f: &[(&str, String)], mal: Result<Rounded<f64>>, mpfr: Result<Rounded<f64>>) {
+fn compare64(
+    op: &str,
+    data: &[u8],
+    f: &[(&str, String)],
+    mal: Result<Rounded<f64>>,
+    mpfr: Result<Rounded<f64>>,
+) {
     match (&mal, &mpfr) {
         (Ok(a), Ok(b)) if a.value.to_bits() == b.value.to_bits() => {}
         (Err(a), Err(b)) if a.kind == b.kind => {}
@@ -292,7 +305,13 @@ fn compare64(op: &str, data: &[u8], f: &[(&str, String)], mal: Result<Rounded<f6
     }
 }
 
-fn compare32(op: &str, data: &[u8], f: &[(&str, String)], mal: Result<Rounded<f32>>, mpfr: Result<Rounded<f32>>) {
+fn compare32(
+    op: &str,
+    data: &[u8],
+    f: &[(&str, String)],
+    mal: Result<Rounded<f32>>,
+    mpfr: Result<Rounded<f32>>,
+) {
     match (&mal, &mpfr) {
         (Ok(a), Ok(b)) if a.value.to_bits() == b.value.to_bits() => {}
         (Err(a), Err(b)) if a.kind == b.kind => {}

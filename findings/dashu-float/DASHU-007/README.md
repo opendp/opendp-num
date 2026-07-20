@@ -2,6 +2,8 @@
 
 Status: confirmed on the locked baseline. Confidence: high. Classification: `incorrect-result`.
 
+Contract: `uniformity`. Owner: `backend`. Masked by adapter: `false`.
+
 Latest release check: Still reproduces with dashu-float 0.5.0.
 
 ## Summary
@@ -42,4 +44,4 @@ The direct, exact-power-of-two, and sequence inputs all isolate the same log2 im
 
 ## Reporting note
 
-This report describes behavior observed through `opendp-num`'s Dashu adapter and compares directed primitive results bit-for-bit with Rug/MPFR. Upstream maintainers should confirm whether the defect belongs in Dashu itself or in the adapter before assigning it.
+This report describes behavior observed through opendp-num's backend-neutral uniformity contract. The retained evidence identifies whether the cause is in a provider or in the adapter.

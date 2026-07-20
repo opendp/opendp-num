@@ -209,16 +209,32 @@ directed_binary_all!(f32);
 
 macro_rules! directed_powi {
     ($ty:ty) => {
-        impl DirectedPowI<$ty> for Mpfr {
-            fn eval(base: $ty, exponent: i32, direction: Direction) -> Result<Rounded<$ty>> {
+        impl DirectedPowI<$ty, Integer> for Mpfr {
+            fn eval(base: $ty, exponent: &Integer, direction: Direction) -> Result<Rounded<$ty>> {
                 if !base.is_finite() {
                     return Err(non_finite_input());
+                }
+                if base == 0.0 && exponent < &0 {
+                    return Err(Error::new(
+                        ErrorKind::DivisionByZero,
+                        "zero to a negative power",
+                    ));
                 }
                 let round = to_round(direction);
                 let mut output = Float::with_val(<$ty as PrimitiveFloat>::PRECISION, base);
                 let previous = output.pow_assign_round(exponent, round);
                 output.subnormalize_ieee_round(previous, round);
                 finish(output, direction)
+            }
+        }
+
+        impl DirectedPowI<$ty, i32> for Mpfr {
+            fn eval(base: $ty, exponent: &i32, direction: Direction) -> Result<Rounded<$ty>> {
+                <Self as DirectedPowI<$ty, Integer>>::eval(
+                    base,
+                    &Integer::from(*exponent),
+                    direction,
+                )
             }
         }
     };

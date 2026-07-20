@@ -27,9 +27,24 @@ def render_finding(finding: dict, baseline: dict, inputs: list[dict]) -> str:
         # Probe-verified finding: reproduced directly against the library API.
         reproductions = finding.get("direct_reproduction", "")
         evidence = "Reproduced directly against the library API; see the command above."
+    contract = finding.get("contract", "uniformity")
+    owner = finding.get("owner", "backend")
+    masked = finding.get("masked_by_adapter", False)
+    reporting_note = (
+        "This is a direct provider probe. The opendp-num adapter does not expose this "
+        "arbitrary-precision float conversion path, so the backend defect is retained even "
+        "though it does not currently violate the public uniformity surface."
+        if contract == "backend_conformance"
+        else
+        "This report describes behavior observed through opendp-num's backend-neutral "
+        "uniformity contract. The retained evidence identifies whether the cause is in a "
+        "provider or in the adapter."
+    )
     return f"""# {finding['id']}: {finding['title']}
 
 Status: confirmed on the locked baseline. Confidence: {finding['confidence']}. Classification: `{finding['classification']}`.
+
+Contract: `{contract}`. Owner: `{owner}`. Masked by adapter: `{str(masked).lower()}`.
 
 Latest release check: {finding['upstream_status']}
 
@@ -65,7 +80,7 @@ Run from the repository root after installing `cargo-fuzz`:
 
 ## Reporting note
 
-This report describes behavior observed through `opendp-num`'s Dashu adapter and compares directed primitive results bit-for-bit with Rug/MPFR. Upstream maintainers should confirm whether the defect belongs in Dashu itself or in the adapter before assigning it.
+{reporting_note}
 """
 
 
@@ -107,21 +122,24 @@ def main() -> int:
         (directory / "README.md").write_text(render_finding(finding, payload["baseline"], rendered_inputs))
         index.append({
             **{key: finding[key] for key in ("id", "library", "title", "classification", "confidence")},
+            "contract": finding.get("contract", "uniformity"),
+            "owner": finding.get("owner", "backend"),
+            "masked_by_adapter": finding.get("masked_by_adapter", False),
             "directory": str(directory.relative_to(ROOT.parent)),
             "inputs": rendered_inputs,
             "reports": copied_reports,
         })
 
     rows = "\n".join(
-        f"| [{item['id']}]({item['library']}/{item['id']}/) | {item['library']} | {item['classification']} | {item['title']} |"
+        f"| [{item['id']}]({item['library']}/{item['id']}/) | {item['library']} | {item['contract']} | {item['classification']} | {item['title']} |"
         for item in index
     )
     (output / "README.md").write_text(f"""# Curated fuzzer findings
 
 These are conservatively deduplicated findings from differential and property fuzzing of `opendp-num`. Raw runner failures are intentionally excluded: every listed reproducer must pass `fuzz/verify_findings.py` on the locked baseline.
 
-| ID | Library | Kind | Finding |
-|---|---|---|---|
+| ID | Library | Contract | Kind | Finding |
+|---|---|---|---|---|
 {rows}
 
 ## Reproduce everything

@@ -1,8 +1,8 @@
 # Continuous fuzzing
 
-The fuzz suite is organized by input shape rather than by backend. This keeps mutations productive while covering the complete numerical surface audited from OpenDP commit `8cc809d38ac620e42bc6ca1c7ed3a1c19b2c0b02`.
+The fuzz suite is organized by input shape and contract category. Uniformity targets enforce backend-neutral observable behavior; backend-conformance targets probe provider APIs and construction states that an adapter can sanitize, repair, or hide. OpenDP commit `8cc809d38ac620e42bc6ca1c7ed3a1c19b2c0b02` remains the source of the legacy consumer-operation audit, not the conceptual boundary of the testbed.
 
-The machine-readable inventory is `fuzz/operation_manifest.json`. Its checker fails when a listed operation loses its harness or a fuzz target is added without being classified:
+The machine-readable inventory is `fuzz/operation_manifest.json`. Schema 2 classifies every target and gives the new P0 contracts typed Rust witnesses. The checker also retains string needles as supplementary linting for the 51 legacy operation audits:
 
 ```bash
 cd fuzz
@@ -16,13 +16,15 @@ cd fuzz
 | `exact_integer` | signed add/subtract/multiply/negate/absolute value/ordering; natural division/remainder; Euclidean GCD; `UBig::from_be_bytes`; bit length; inverse and distributive identities; Dashu vs Malachite vs Rug |
 | `exact_rational` | canonical construction/decomposition; add/subtract/multiply/checked divide/negate; floor and nearest rounding with ties away from zero; square/power-of-two; ordering; Dashu vs Rug |
 | `directed_binary` | correctly rounded `f32` and `f64` add/subtract/multiply/divide in both directions; Dashu vs MPFR bit-for-bit; lower bound no greater than upper bound |
-| `directed_unary` | correctly rounded `sqrt`, `ln`, `log2`, `ln1p`, `exp`, `expm1`, and signed-integer power for `f32` and `f64`; Dashu vs MPFR bit-for-bit; lower bound no greater than upper bound |
+| `directed_unary` | uniformity for correctly rounded `sqrt`, `ln`, `log2`, `ln1p`, `exp`, `expm1`, and arbitrary-precision signed-integer power for `f32` and `f64`; Dashu vs MPFR bit-for-bit; lower bound no greater than upper bound |
 | `conversions` | rational/integer/natural to `f32`/`f64` under down/nearest/up rounding; exact `f32`/`f64` to rational; directed `f64` to `f32` |
 | `primitive_casts` | exact and saturating `IBig`/`UBig` conversion to every Rust primitive integer type, concentrated at each target type’s minimum and maximum |
 | `alp_primitives` | Dashu `with_precision` under Down/Up/Zero; exact floor/fraction decomposition; upward-rounded reciprocal probability; parameter comparison; ALP scale/truncate/multiply/floor/fraction pipeline |
 | `opendp_sequences` | bytecode-generated compositions of every directed arithmetic and transcendental operation, checked after every step against MPFR |
+| `malachite_float` | backend differential qualification for Malachite float arithmetic, transcendental behavior, power, and conversion |
+| `backend_float_conversion` | backend-conformance probes for raw Dashu `FBig<R,2>`, `FBig<R,10>`, and `DBig` construction via `from_parts`, conversion to f32/f64, exactness metadata, signed zero, panic freedom, and duration context |
 
-The manifest currently records 51 operation-level contracts across exact integers, naturals, rationals, conversions, directed primitive arithmetic, ALP-specific `FBig` behavior, and composed expressions. When OpenDP adds another numerical operation, update the manifest and add the operation to an isolated target plus `opendp_sequences` when composable.
+The manifest currently records six typed P0 contracts and 51 legacy operation audits. The typed set closes the arbitrary-exponent and raw Dashu conversion blind spots; the remaining legacy entries must be migrated to typed witnesses before the project claims complete signature-level coverage.
 
 ## Search-space strategy
 
@@ -33,7 +35,8 @@ The harnesses deliberately combine several kinds of input generation:
 - arbitrary-precision integers derived independently from up to 4096 input bytes;
 - targeted powers of two through exponent 8192;
 - rational numerators and denominators mutated independently;
-- signed integer exponents concentrated around `-1`, `0`, `1`, mantissa widths, exponent limits, and large magnitudes;
+- arbitrary-precision signed integer exponents, including values beyond `i32`, explicit even/odd parity, powers of two, huge negative values, and primitive mantissa/exponent boundaries;
+- raw binary and decimal significands up to 4096 bits, including the Dashu PR #91 subnormal-halfway and over-wide decimal families;
 - operation bytecode sequences of up to 32 steps;
 - target-specific dictionaries and deterministic boundary corpora;
 - libFuzzer comparison tracing plus `-use_value_profile=1`.
@@ -77,6 +80,7 @@ Useful options:
   --target directed_unary \
   --target directed_binary \
   --target conversions \
+  --target backend_float_conversion \
   --target alp_primitives
 
 # Periodic memory-safety campaign
@@ -100,6 +104,8 @@ Useful options:
 
 The pure-Rust numerical correctness campaign defaults to `--sanitizer none` for throughput. Run a smaller periodic `--sanitizer address` campaign because Rug/MPFR and transitive dependencies include native code.
 
+The active `exact_rational` and `conversions` corpora are capped at 3000-byte inputs. Larger inputs enter the known DASHU-008 GCD scratchpad panic; its direct reproducers remain in the findings archive and are replayed separately.
+
 ## Failure and error logging
 
 A numerical contract failure writes the raw input and a structured report before panicking:
@@ -109,7 +115,7 @@ fuzz/reports/<target>/<stable-id>.input
 fuzz/reports/<target>/<stable-id>.json
 ```
 
-The JSON record contains:
+Schema-2 JSON records contain:
 
 - target, operation, and human-readable failed contract;
 - primitive bit patterns or exact decimal operands;
@@ -118,6 +124,8 @@ The JSON record contains:
 - sequence step and expression trace when applicable;
 - exact FBig representation for ALP failures;
 - path to the raw reproducer.
+- contract category (`uniformity` or `backend_conformance`), provider, construction path, source type/precision, significand width, and oracle;
+- expected and observed result classes, owner category, adapter masking status, and raw/adapter outcomes when applicable.
 
 The target also emits a searchable line:
 
@@ -161,6 +169,7 @@ For publication-oriented triage, the reviewed registry and curated output are ma
 
 ```bash
 ./verify_findings.py
+./verify_backend_profiles.py
 ./triage_findings.py
 ./quarantine_known.py --apply
 ```
@@ -171,7 +180,7 @@ See `findings/METHODOLOGY.md` for the identity-preserving minimization and dedup
 
 Use three layers:
 
-1. **Pull requests:** `./ci_smoke.sh`, normally 30–60 seconds per target. This verifies the coverage manifest, builds every target, and replays retained corpora.
+1. **Pull requests:** `./ci_smoke.sh`, normally 30–60 seconds per target. This verifies typed witnesses and legacy coverage, replays retained backend conversion inputs in debug-assertion and release profiles, builds every target, and runs bounded corpora.
 2. **Continuous numerical runner:** `./run_campaign.py --sanitizer none` on persistent Linux storage for maximum execution rate.
 3. **Periodic native-memory runner:** a shorter `./run_campaign.py --sanitizer address` campaign.
 

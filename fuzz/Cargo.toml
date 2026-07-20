@@ -81,3 +81,10 @@ path = "fuzz_targets/malachite_float.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "backend_float_conversion"
+path = "fuzz_targets/backend_float_conversion.rs"
+test = false
+doc = false
+bench = false

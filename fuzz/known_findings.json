@@ -12,6 +12,10 @@
     "exact_rational": {
       "max_len": 3000,
       "reason": "DASHU-008 reproduces at 3136 bytes and larger; direct reproducers remain available outside the active corpus."
+    },
+    "conversions": {
+      "max_len": 3000,
+      "reason": "This target also constructs Dashu ratios and reaches the DASHU-008 GCD scratchpad panic above 3000 bytes; direct reproducers remain available outside the active corpus."
     }
   },
   "findings": [
@@ -57,13 +61,13 @@
     {
       "id": "DASHU-008",
       "library": "dashu-int",
-      "title": "Rational construction triggers internal allocation panic in GCD",
+      "title": "Rational reduction: Lehmer GCD reaches Burnikel-Ziegler division that overflows a pre-sized scratchpad",
       "classification": "panic",
       "confidence": "high",
       "upstream_status": "Still reproduces with dashu-int 0.5.0.",
-      "summary": "Constructing and reducing a fuzzed rational reaches dashu-int's divide-and-conquer GCD and panics with `internal error: not enough memory allocated`.",
-      "impact": "Valid large integer inputs can panic during rational normalization.",
-      "deduplication": "A unique raw backend panic identified by its dashu-int memory.rs assertion and GCD stack.",
+      "summary": "Constructing/reducing a fuzzed rational calls plain GCD (dashu-ratio reduce -> gcd_in_place, Lehmer). The scratchpad is sized ONCE from the initial operand lengths (gcd_ops.rs:140 -> div::memory_requirement_exact, div/mod.rs:258-265 - which returns zero_layout when the initial pair is within threshold::simple()=32). But each euclidean step's division dispatches on the CURRENT lengths (div/mod.rs:285): as Lehmer shrinks y while x stays large, a later lopsided step enters Burnikel-Ziegler divide-and-conquer division, whose multiplication temporary (divide_conquer.rs:127 -> mul -> karatsuba.rs:94) allocates scratch that was never reserved, so allocate_slice_initialize's expect panics at dashu-int-0.5.0/src/memory.rs:150 (\"internal error: not enough memory allocated\").",
+      "impact": "Valid large integer inputs can abort the process during rational normalization.",
+      "deduplication": "One dashu-int allocation defect: the scratchpad reservation (initial lengths) and the per-step division dispatch (current lengths) use divergent predicates. Traced by source audit; both retained reproducers hit memory.rs:150.",
       "inputs": [
         {
           "target": "exact_rational",
@@ -84,13 +88,82 @@
       "title": "IBig/UBig to_f64 reports an inexact conversion as Exact and rounds to the wrong side",
       "classification": "incorrect-result",
       "confidence": "high",
+      "contract": "backend_conformance",
+      "owner": "backend",
+      "masked_by_adapter": true,
       "upstream_status": "Reproduces directly against dashu 0.5.0. opendp-num defends against it by not trusting the Approximation tag, so it no longer manifests through the adapter, but the dashu defect itself remains.",
-      "summary": "IBig::from(-(2^128 - 1)).to_f64() returns Approximation::Exact(-3.402823669209385e38) even though -(2^128 - 1) is not representable as f64, and the returned value is on the wrong side of the exact value (larger magnitude). A caller that trusts the Exact tag gets an incorrect, non-directed result.",
-      "impact": "Any consumer relying on to_f64 to signal exactness, or on the directed rounding implied by the Approximation sign, receives a silently incorrect conversion.",
-      "deduplication": "A single dashu conversion-rounding/exactness-reporting defect. Distinct from the correctly-rounded-arithmetic behavior of RBig.",
+      "summary": "IBig::from(-(2^128 - 1)).to_f64() returns Approximation::Exact(-3.402823669209385e38) even though -(2^128 - 1) is not representable as f64. Root cause (dashu-int-0.5.0/src/convert.rs:1130-1140, to_f64_small; to_f32_small is not affected, being guarded by is_infinite): the exactness test is `let back = f as DoubleWord; back.partial_cmp(&dword)`, but `f as DoubleWord` is a SATURATING float->int cast. For dword = DoubleWord::MAX (2^128-1 on 64-bit), f rounds up to 2^128 and `(2^128) as u128` saturates back to u128::MAX == dword, so the comparison reports Equal and the value is tagged Exact. It only misfires at exactly DoubleWord::MAX; nearby values saturate to a larger `back` and are correctly Inexact.",
+      "impact": "A caller trusting the Exact tag (or the Approximation sign for directed rounding) gets a silently incorrect, non-directed conversion at the type-maximum boundary. opendp-num defends by re-deriving the rounding from the exact rational and ignoring the tag.",
+      "deduplication": "A single dashu-int conversion exactness-reporting defect caused by a saturating float->int cast in the exactness test. Verified directly via examples/root_cause.rs and by source audit.",
       "inputs": [],
       "reports": [],
-      "direct_reproduction": "cargo run --example root_cause --features all-backends"
+      "direct_reproduction": "cargo run --example root_cause --features all-backends",
+      "direct_expected": "IBig::to_f64()      = Exact("
+    },
+    {
+      "id": "DASHU-020",
+      "library": "dashu-float",
+      "title": "FBig and DBig double-round values adjacent to primitive subnormal halfways",
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "contract": "backend_conformance",
+      "owner": "backend",
+      "masked_by_adapter": true,
+      "upstream_status": "Confirmed on dashu-float 0.5.0. Upstream PR #91 (afdc90a) contains a proposed fix and equivalent regression tests; the PR was open when verified on 2026-07-20.",
+      "summary": "Raw FBig/DBig conversion first rounds to a fixed 53/24-bit intermediate and then rounds again to the exponent-dependent f64/f32 subnormal grid. Values just below a subnormal halfway can land on the halfway during the first rounding and then round to the adjacent even subnormal, one ULP above the correct result.",
+      "impact": "Direct Dashu arbitrary-precision float conversion can silently return the wrong primitive bits in both binary and decimal construction paths. The opendp-num adapter does not expose FBig-to-primitive conversion, so its existing exact-number conversion contracts do not reveal this backend defect.",
+      "deduplication": "The f32/f64 and binary/decimal manifestations share the fixed-width-intermediate double-rounding mechanism documented and fixed together in upstream PR #91. They are retained as four construction/format witnesses for one backend defect.",
+      "inputs": [
+        {
+          "target": "backend_float_conversion",
+          "path": "known_inputs/DASHU-020-f64-binary.input",
+          "expected": "operation=to_f64 reason=raw backend conversion differs from exact-rational oracle"
+        },
+        {
+          "target": "backend_float_conversion",
+          "path": "known_inputs/DASHU-020-f32-binary.input",
+          "expected": "operation=to_f32 reason=raw backend conversion differs from exact-rational oracle"
+        },
+        {
+          "target": "backend_float_conversion",
+          "path": "known_inputs/DASHU-020-f64-decimal.input",
+          "expected": "operation=to_f64 reason=raw backend conversion differs from exact-rational oracle"
+        },
+        {
+          "target": "backend_float_conversion",
+          "path": "known_inputs/DASHU-020-f32-decimal.input",
+          "expected": "operation=to_f32 reason=raw backend conversion differs from exact-rational oracle"
+        }
+      ],
+      "reports": [
+        "reports/backend_float_conversion/8e6643b189861d6a.json",
+        "reports/backend_float_conversion/c448a5f9da5da020.json",
+        "reports/backend_float_conversion/0555aa31c47e46e5.json",
+        "reports/backend_float_conversion/eb5cfaf0309cfe6d.json"
+      ]
+    },
+    {
+      "id": "DASHU-021",
+      "library": "dashu-float",
+      "title": "High-precision DBig to primitive conversion panics with debug assertions",
+      "classification": "panic",
+      "confidence": "high",
+      "contract": "backend_conformance",
+      "owner": "backend",
+      "masked_by_adapter": true,
+      "upstream_status": "Confirmed on dashu-float 0.5.0. Upstream PR #91 (afdc90a) removes the assertion and rounds over-wide quotients; the PR was open when verified on 2026-07-20.",
+      "summary": "DBig conversion of an over-wide decimal significand reaches the base-changing division with more dividend digits than its fixed target precision permits. A debug assertion aborts conversion; optimized release mode disables that assertion and completes, creating profile-dependent observable behavior.",
+      "impact": "A valid finite arbitrary-precision decimal can abort debug builds during to_f64/to_f32. Release builds take a different path and may silently double-round over-wide quotients, so debug and release do not enforce the same conversion contract.",
+      "deduplication": "Separated from DASHU-020 because this is a construction-width assertion/profile-equivalence failure in base-changing division, while DASHU-020 is a demonstrated one-ULP subnormal result caused by fixed-width intermediate rounding. Upstream PR #91 addresses both mechanisms.",
+      "inputs": [
+        {
+          "target": "backend_float_conversion",
+          "path": "known_inputs/DASHU-021-high-precision-decimal.input",
+          "expected": "assertion failed: lhs.digits() <= self.precision + rhs.digits()",
+          "profiles": {"debug_assertions": "panic", "release": "pass"}
+        }
+      ],
+      "reports": []
     }
   ],
   "caused_by_adapter": [

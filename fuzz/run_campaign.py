@@ -32,7 +32,8 @@ TARGETS = (
     Target("exact_rational", weight=2, max_len=3000, timeout=25, dictionary="integer.dict"),
     Target("directed_unary", weight=4, max_len=64, timeout=15, dictionary="float.dict"),
     Target("directed_binary", weight=4, max_len=64, timeout=15, dictionary="float.dict"),
-    Target("conversions", weight=3, max_len=4096, timeout=20, dictionary="float.dict"),
+    Target("conversions", weight=3, max_len=3000, timeout=20, dictionary="float.dict"),
+    Target("backend_float_conversion", weight=3, max_len=1024, timeout=10, dictionary="float.dict"),
     Target("primitive_casts", weight=2, max_len=4096, timeout=20, dictionary="integer.dict"),
     Target("alp_primitives", weight=2, max_len=64, timeout=20, dictionary="float.dict"),
     Target("opendp_sequences", weight=5, max_len=4096, timeout=25, dictionary="sequence.dict"),
@@ -391,13 +392,40 @@ def write_runner_report(
     report_path = report_dir / f"{target}-{digest}.json"
     artifact_match = re.findall(r"Test unit written to (.+)", text)
     tail = "\n".join(text.splitlines()[-200:])
+    backend_targets = {
+        "backend_float_conversion": "dashu",
+        "malachite_float": "malachite",
+    }
+    contract = "backend_conformance" if target in backend_targets else "uniformity"
+    owner = (
+        "resource_behavior"
+        if category in {"timeout", "out_of_memory"}
+        else "harness"
+        if category == "infrastructure_failure"
+        else "backend"
+        if contract == "backend_conformance"
+        else "unspecified"
+    )
     payload = {
-        "schema": 1,
+        "schema": 2,
         "timestamp_unix": int(time.time()),
         "target": target,
         "worker_index": worker_index,
         "category": category,
         "reason": reason,
+        "contract": contract,
+        "provider": backend_targets.get(target, "multiple"),
+        "owner": owner,
+        "construction": "unknown_from_runner",
+        "source_type": "unknown_from_runner",
+        "source_precision": "unknown_from_runner",
+        "significand_bits": "unknown_from_runner",
+        "oracle": "unknown_from_runner",
+        "expected_class": "clean_completion",
+        "observed_class": category,
+        "masked_by_adapter": "unknown_from_runner",
+        "adapter_result": "not_evaluated",
+        "raw_backend_result": reason,
         "log": str(log_path),
         "artifact": artifact_match[-1].strip() if artifact_match else None,
         "log_tail": tail,

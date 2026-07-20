@@ -11,6 +11,7 @@
     {
       "classification": "incorrect-result",
       "confidence": "high",
+      "contract": "uniformity",
       "directory": "findings/dashu-float/DASHU-007",
       "id": "DASHU-007",
       "inputs": [
@@ -44,6 +45,8 @@
         }
       ],
       "library": "dashu-float",
+      "masked_by_adapter": false,
+      "owner": "backend",
       "reports": [
         "findings/dashu-float/DASHU-007/reports/8a1c248eb519cf70.json",
         "findings/dashu-float/DASHU-007/reports/a646a81a4a4a3873.json",
@@ -55,6 +58,7 @@
     {
       "classification": "panic",
       "confidence": "high",
+      "contract": "uniformity",
       "directory": "findings/dashu-int/DASHU-008",
       "id": "DASHU-008",
       "inputs": [
@@ -74,18 +78,95 @@
         }
       ],
       "library": "dashu-int",
+      "masked_by_adapter": false,
+      "owner": "backend",
       "reports": [],
-      "title": "Rational construction triggers internal allocation panic in GCD"
+      "title": "Rational reduction: Lehmer GCD reaches Burnikel-Ziegler division that overflows a pre-sized scratchpad"
     },
     {
       "classification": "incorrect-result",
       "confidence": "high",
+      "contract": "backend_conformance",
       "directory": "findings/dashu/DASHU-015",
       "id": "DASHU-015",
       "inputs": [],
       "library": "dashu",
+      "masked_by_adapter": true,
+      "owner": "backend",
       "reports": [],
       "title": "IBig/UBig to_f64 reports an inexact conversion as Exact and rounds to the wrong side"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "contract": "backend_conformance",
+      "directory": "findings/dashu-float/DASHU-020",
+      "id": "DASHU-020",
+      "inputs": [
+        {
+          "bytes": 25,
+          "expected": "operation=to_f64 reason=raw backend conversion differs from exact-rational oracle",
+          "path": "findings/dashu-float/DASHU-020/inputs/DASHU-020-f64-binary.input",
+          "sha256": "7f090d3aa55417bf2af707bd2db85a2f564a785be597aeb9eab349507601da30",
+          "target": "backend_float_conversion"
+        },
+        {
+          "bytes": 17,
+          "expected": "operation=to_f32 reason=raw backend conversion differs from exact-rational oracle",
+          "path": "findings/dashu-float/DASHU-020/inputs/DASHU-020-f32-binary.input",
+          "sha256": "ce6079637801d0d43eaeadd86f4a6fc174b608f3f2004c9b439a29d63481e4d0",
+          "target": "backend_float_conversion"
+        },
+        {
+          "bytes": 685,
+          "expected": "operation=to_f64 reason=raw backend conversion differs from exact-rational oracle",
+          "path": "findings/dashu-float/DASHU-020/inputs/DASHU-020-f64-decimal.input",
+          "sha256": "7569902ffe71e7f5b3b9cc25a83301f735c09447a1b72abf1d2bd8d644e150fb",
+          "target": "backend_float_conversion"
+        },
+        {
+          "bytes": 123,
+          "expected": "operation=to_f32 reason=raw backend conversion differs from exact-rational oracle",
+          "path": "findings/dashu-float/DASHU-020/inputs/DASHU-020-f32-decimal.input",
+          "sha256": "89086a415ffb3016a067ddd6ac96326f2c6966d1f2ea36caa2bbe9cdff9f3e6a",
+          "target": "backend_float_conversion"
+        }
+      ],
+      "library": "dashu-float",
+      "masked_by_adapter": true,
+      "owner": "backend",
+      "reports": [
+        "findings/dashu-float/DASHU-020/reports/8e6643b189861d6a.json",
+        "findings/dashu-float/DASHU-020/reports/c448a5f9da5da020.json",
+        "findings/dashu-float/DASHU-020/reports/0555aa31c47e46e5.json",
+        "findings/dashu-float/DASHU-020/reports/eb5cfaf0309cfe6d.json"
+      ],
+      "title": "FBig and DBig double-round values adjacent to primitive subnormal halfways"
+    },
+    {
+      "classification": "panic",
+      "confidence": "high",
+      "contract": "backend_conformance",
+      "directory": "findings/dashu-float/DASHU-021",
+      "id": "DASHU-021",
+      "inputs": [
+        {
+          "bytes": 35,
+          "expected": "assertion failed: lhs.digits() <= self.precision + rhs.digits()",
+          "path": "findings/dashu-float/DASHU-021/inputs/DASHU-021-high-precision-decimal.input",
+          "profiles": {
+            "debug_assertions": "panic",
+            "release": "pass"
+          },
+          "sha256": "af8038980850d0dfe8ad47d7a6e0d99b74c540e85f65d7b9fd272e2df3db0aa9",
+          "target": "backend_float_conversion"
+        }
+      ],
+      "library": "dashu-float",
+      "masked_by_adapter": true,
+      "owner": "backend",
+      "reports": [],
+      "title": "High-precision DBig to primitive conversion panics with debug assertions"
     }
   ],
   "schema": 1

@@ -1,5 +1,83 @@
 {
-  "schema": 1,
+  "schema": 2,
+  "targets": [
+    {"name": "exact_integer", "contract": "uniformity", "witness": "witness_exact_integer"},
+    {"name": "exact_rational", "contract": "uniformity", "witness": "witness_exact_rational"},
+    {"name": "directed_unary", "contract": "uniformity", "witness": "witness_directed_unary"},
+    {"name": "directed_binary", "contract": "uniformity", "witness": "witness_directed_binary"},
+    {"name": "conversions", "contract": "uniformity", "witness": "witness_conversions"},
+    {"name": "primitive_casts", "contract": "uniformity", "witness": "witness_primitive_casts"},
+    {"name": "alp_primitives", "contract": "uniformity", "witness": "witness_alp_primitives"},
+    {"name": "opendp_sequences", "contract": "uniformity", "witness": "witness_opendp_sequences"},
+    {"name": "malachite_float", "contract": "backend_conformance", "witness": "witness_malachite_float"},
+    {"name": "backend_float_conversion", "contract": "backend_conformance", "witness": "witness_backend_float_conversion"}
+  ],
+  "contracts": [
+    {
+      "id": "directed-powi-f64-bigint",
+      "contract": "uniformity",
+      "operation": "powi",
+      "provider": "all-supported",
+      "input_types": {"base": "f64", "exponent": "arbitrary_precision_signed_integer"},
+      "rounding": ["down", "up"],
+      "target": "directed_unary",
+      "witness": "witness_directed_powi_f64_bigint"
+    },
+    {
+      "id": "directed-powi-f32-bigint",
+      "contract": "uniformity",
+      "operation": "powi",
+      "provider": "all-supported",
+      "input_types": {"base": "f32", "exponent": "arbitrary_precision_signed_integer"},
+      "rounding": ["down", "up"],
+      "target": "directed_unary",
+      "witness": "witness_directed_powi_f32_bigint"
+    },
+    {
+      "id": "dashu-fbig-to-f64-binary-from-parts",
+      "contract": "backend_conformance",
+      "provider": "dashu",
+      "operation": "to_f64",
+      "source_type": "FBig<R,2>",
+      "construction": "from_parts",
+      "states": ["arbitrary_precision", "subnormal_halfway", "overwide_significand"],
+      "target": "backend_float_conversion",
+      "witness": "witness_dashu_fbig_to_f64"
+    },
+    {
+      "id": "dashu-fbig-to-f32-binary-from-parts",
+      "contract": "backend_conformance",
+      "provider": "dashu",
+      "operation": "to_f32",
+      "source_type": "FBig<R,2>",
+      "construction": "from_parts",
+      "states": ["arbitrary_precision", "subnormal_halfway", "overwide_significand"],
+      "target": "backend_float_conversion",
+      "witness": "witness_dashu_fbig_to_f32"
+    },
+    {
+      "id": "dashu-fbig-decimal-to-primitive-from-parts",
+      "contract": "backend_conformance",
+      "provider": "dashu",
+      "operation": "to_f32/to_f64",
+      "source_type": "FBig<R,10>",
+      "construction": "from_parts",
+      "states": ["arbitrary_precision", "subnormal_halfway", "overwide_significand"],
+      "target": "backend_float_conversion",
+      "witness": "witness_dashu_fbig_decimal_to_primitive"
+    },
+    {
+      "id": "dashu-dbig-to-primitive-from-parts",
+      "contract": "backend_conformance",
+      "provider": "dashu",
+      "operation": "to_f32/to_f64",
+      "source_type": "DBig",
+      "construction": "from_parts",
+      "states": ["arbitrary_precision", "subnormal_halfway", "overwide_significand"],
+      "target": "backend_float_conversion",
+      "witness": "witness_dashu_dbig_to_primitive"
+    }
+  ],
   "differential_targets": [
     "malachite_float"
   ],

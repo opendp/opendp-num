@@ -38,7 +38,10 @@ fn from_down_f64(v: FBig<Down>) -> f64 {
 /// dashu-float directed unary at a chosen working precision, mirroring the adapter.
 fn dashu_unary(x: f64, prec: usize, up: bool, op: &str) -> f64 {
     if up {
-        let i = FBig::<Up>::try_from(x).unwrap().with_precision(prec).value();
+        let i = FBig::<Up>::try_from(x)
+            .unwrap()
+            .with_precision(prec)
+            .value();
         let r = match op {
             "ln1p" => i.ln_1p(),
             "expm1" => i.exp_m1(),
@@ -48,7 +51,10 @@ fn dashu_unary(x: f64, prec: usize, up: bool, op: &str) -> f64 {
         };
         from_up_f64(r)
     } else {
-        let i = FBig::<Down>::try_from(x).unwrap().with_precision(prec).value();
+        let i = FBig::<Down>::try_from(x)
+            .unwrap()
+            .with_precision(prec)
+            .value();
         let r = match op {
             "ln1p" => i.ln_1p(),
             "expm1" => i.exp_m1(),
@@ -75,10 +81,16 @@ fn fbig_rat<R: dashu::float::round::Round>(r: &FBig<R>) -> RBig {
 
 fn dashu_powi(base: f64, exp: i32, prec: usize, up: bool) -> f64 {
     if up {
-        let b = FBig::<Up>::try_from(base).unwrap().with_precision(prec).value();
+        let b = FBig::<Up>::try_from(base)
+            .unwrap()
+            .with_precision(prec)
+            .value();
         from_up_f64(b.powi(IBig::from(exp)))
     } else {
-        let b = FBig::<Down>::try_from(base).unwrap().with_precision(prec).value();
+        let b = FBig::<Down>::try_from(base)
+            .unwrap()
+            .with_precision(prec)
+            .value();
         from_down_f64(b.powi(IBig::from(exp)))
     }
 }
@@ -223,7 +235,10 @@ fn main() {
     let q = f64_to_rbig(lhs) / f64_to_rbig(rhs);
     let correct_down = round_directed(&q, false);
     let mpfr_down = mpfr_round(&q, false);
-    println!("  native f64 lhs/rhs  = {} (precheck sees this)", bits(native));
+    println!(
+        "  native f64 lhs/rhs  = {} (precheck sees this)",
+        bits(native)
+    );
     println!("  correct Down (exact)= {}", bits(correct_down));
     println!("  MPFR Down           = {}", bits(mpfr_down));
     println!("  f64::MAX            = {}", bits(f64::MAX));
@@ -266,10 +281,34 @@ fn main() {
             exact.to_bits() == mpfr.to_bits()
         );
     };
-    arith("DASHU-002", 0x7fefffffffffffff, 0x3ff0000000000000, '-', false);
-    arith("DASHU-012", 0x0000000000000001, 0xbfefffffffffffff, '+', true);
-    arith("DASHU-018", 0x8000000000000000, 0x0000003ff0020000, '+', true);
-    arith("DASHU-019", 0x0000000000000001, 0x0000000000000001, '*', false);
+    arith(
+        "DASHU-002",
+        0x7fefffffffffffff,
+        0x3ff0000000000000,
+        '-',
+        false,
+    );
+    arith(
+        "DASHU-012",
+        0x0000000000000001,
+        0xbfefffffffffffff,
+        '+',
+        true,
+    );
+    arith(
+        "DASHU-018",
+        0x8000000000000000,
+        0x0000003ff0020000,
+        '+',
+        true,
+    );
+    arith(
+        "DASHU-019",
+        0x0000000000000001,
+        0x0000000000000001,
+        '*',
+        false,
+    );
 
     // ---- Transcendentals: does raising dashu working precision fix it? ----
     println!("\n== Transcendentals: dashu@53 vs dashu@200 (adapter uses 53) ==");
@@ -288,19 +327,44 @@ fn main() {
     uni("DASHU-013", 0x0010000000000000, true, "expm1"); // correct Up = next f64 above min-normal
     let p53 = dashu_powi(f64::from_bits(0x7fefffffffffffff), -53, PREC53, false);
     let p200 = dashu_powi(f64::from_bits(0x7fefffffffffffff), -53, 200, false);
-    println!("  DASHU-011 powi  Down: dashu@53={}  dashu@200={} (correct=+0)", bits(p53), bits(p200));
+    println!(
+        "  DASHU-011 powi  Down: dashu@53={}  dashu@200={} (correct=+0)",
+        bits(p53),
+        bits(p200)
+    );
     // DASHU-007 log2(min-normal)=-1022 exactly; adapter uses log2_bounds (loose).
     // Test a correctly-rounded route: ln(x)/ln(2) at high precision.
     let x = f64::from_bits(0x0010000000000000);
     let l53 = {
-        let i = FBig::<Up>::try_from(x).unwrap().with_precision(PREC53).value();
-        from_up_f64(i.ln() / FBig::<Up>::try_from(2.0f64).unwrap().with_precision(PREC53).value().ln())
+        let i = FBig::<Up>::try_from(x)
+            .unwrap()
+            .with_precision(PREC53)
+            .value();
+        from_up_f64(
+            i.ln()
+                / FBig::<Up>::try_from(2.0f64)
+                    .unwrap()
+                    .with_precision(PREC53)
+                    .value()
+                    .ln(),
+        )
     };
     let l200 = {
         let i = FBig::<Up>::try_from(x).unwrap().with_precision(200).value();
-        from_up_f64(i.ln() / FBig::<Up>::try_from(2.0f64).unwrap().with_precision(200).value().ln())
+        from_up_f64(
+            i.ln()
+                / FBig::<Up>::try_from(2.0f64)
+                    .unwrap()
+                    .with_precision(200)
+                    .value()
+                    .ln(),
+        )
     };
-    println!("  DASHU-007 log2  Up  : ln/ln2 @53={}  @200={} (correct=-1022)", bits(l53), bits(l200));
+    println!(
+        "  DASHU-007 log2  Up  : ln/ln2 @53={}  @200={} (correct=-1022)",
+        bits(l53),
+        bits(l200)
+    );
 
     // ---- Discriminator: is the RAW FBig@200 result correct BEFORE to_f64? ----
     // Compares the exact rational of the raw dashu-float result to the boundary,
@@ -309,42 +373,86 @@ fn main() {
     // DASHU-006: ln1p(2^-1074). True value < 2^-1074, so correct Down = +0.
     {
         let x = f64::from_bits(0x0000000000000001);
-        let raw = FBig::<Down>::try_from(x).unwrap().with_precision(4096).value().ln_1p();
+        let raw = FBig::<Down>::try_from(x)
+            .unwrap()
+            .with_precision(4096)
+            .value()
+            .ln_1p();
         let r = fbig_rat(&raw);
         let thr = f64_to_rbig(x);
         println!(
             "  DASHU-006 ln1p : raw {} 2^-1074  => {}",
-            if r < thr { "<" } else if r > thr { ">" } else { "==" },
-            if r < thr { "FBig correct (bug is to_f64/conversion)" } else { "FBig ln_1p wrong (genuine transcendental)" }
+            if r < thr {
+                "<"
+            } else if r > thr {
+                ">"
+            } else {
+                "=="
+            },
+            if r < thr {
+                "FBig correct (bug is to_f64/conversion)"
+            } else {
+                "FBig ln_1p wrong (genuine transcendental)"
+            }
         );
     }
     // DASHU-013: expm1(2^-1022) Up. True value > 2^-1022.
     {
         let x = f64::from_bits(0x0010000000000000);
-        let raw = FBig::<Up>::try_from(x).unwrap().with_precision(4096).value().exp_m1();
+        let raw = FBig::<Up>::try_from(x)
+            .unwrap()
+            .with_precision(4096)
+            .value()
+            .exp_m1();
         let r = fbig_rat(&raw);
         let thr = f64_to_rbig(x);
         println!(
             "  DASHU-013 expm1: raw {} 2^-1022  => {}",
-            if r < thr { "<" } else if r > thr { ">" } else { "==" },
-            if r > thr { "FBig correct (bug is to_f64/conversion)" } else { "FBig exp_m1 wrong (genuine transcendental)" }
+            if r < thr {
+                "<"
+            } else if r > thr {
+                ">"
+            } else {
+                "=="
+            },
+            if r > thr {
+                "FBig correct (bug is to_f64/conversion)"
+            } else {
+                "FBig exp_m1 wrong (genuine transcendental)"
+            }
         );
     }
     // DASHU-011: powi(MAX,-53) Down. True value > 0.
     {
-        let raw = FBig::<Down>::try_from(f64::from_bits(0x7fefffffffffffff)).unwrap()
-            .with_precision(4096).value().powi(IBig::from(-53));
+        let raw = FBig::<Down>::try_from(f64::from_bits(0x7fefffffffffffff))
+            .unwrap()
+            .with_precision(4096)
+            .value()
+            .powi(IBig::from(-53));
         let r = fbig_rat(&raw);
         let zero = RBig::from(IBig::from(0));
         println!(
             "  DASHU-011 powi : raw sign {}  => {}",
-            if r < zero { "NEGATIVE" } else if r > zero { "positive" } else { "zero" },
-            if r < zero { "FBig powi wrong sign (genuine transcendental)" } else { "FBig sign ok (bug is to_f64/conversion)" }
+            if r < zero {
+                "NEGATIVE"
+            } else if r > zero {
+                "positive"
+            } else {
+                "zero"
+            },
+            if r < zero {
+                "FBig powi wrong sign (genuine transcendental)"
+            } else {
+                "FBig sign ok (bug is to_f64/conversion)"
+            }
         );
         // Attribute the conversion fault: what does dashu's to_f64 report for this
         // tiny positive value, and what does the adapter's from_down do with it?
         println!("    raw.to_f64() = {:?}", raw.to_f64());
         println!("    adapter from_down(raw) = {}", bits(from_down_f64(raw)));
-        println!("    next_down_f64(0.0)    = {} (adapter helper)", bits(next_down_f64(0.0)));
+        println!(
+            "    next_down_f64(0.0)    = {} (adapter helper)",
+            bits(next_down_f64(0.0))
+        );
     }
 }

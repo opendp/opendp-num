@@ -217,9 +217,10 @@ macro_rules! directed_exp {
                 }
                 if !native.is_finite() {
                     return match direction {
-                        Direction::Down => {
-                            Ok(Rounded::new(<$ty as PrimitiveFloat>::max_finite(), direction))
-                        }
+                        Direction::Down => Ok(Rounded::new(
+                            <$ty as PrimitiveFloat>::max_finite(),
+                            direction,
+                        )),
                         _ => Err(overflow_error()),
                     };
                 }
@@ -243,9 +244,10 @@ macro_rules! directed_expm1 {
                 let native = value.native_exp_m1();
                 if !native.is_finite() {
                     return match direction {
-                        Direction::Down => {
-                            Ok(Rounded::new(<$ty as PrimitiveFloat>::max_finite(), direction))
-                        }
+                        Direction::Down => Ok(Rounded::new(
+                            <$ty as PrimitiveFloat>::max_finite(),
+                            direction,
+                        )),
                         _ => Err(overflow_error()),
                     };
                 }
@@ -258,8 +260,9 @@ macro_rules! directed_expm1 {
                         direction,
                     ));
                 }
-                let (result, _) =
-                    value.to_float().exp_x_minus_1_prec_round(WORK_PREC, to_rm(direction));
+                let (result, _) = value
+                    .to_float()
+                    .exp_x_minus_1_prec_round(WORK_PREC, to_rm(direction));
                 finish::<$ty>(result, direction)
             }
         }
@@ -280,7 +283,8 @@ macro_rules! directed_binary {
                     return Err(Error::new(ErrorKind::DivisionByZero, "division by zero"));
                 }
                 let (result, _) =
-                    lhs.to_float().$method(rhs.to_float(), WORK_PREC, to_rm(direction));
+                    lhs.to_float()
+                        .$method(rhs.to_float(), WORK_PREC, to_rm(direction));
                 finish::<$ty>(result, direction)
             }
         }
@@ -305,16 +309,26 @@ directed_binary_all!(f32);
 macro_rules! directed_powi {
     ($ty:ty) => {
         impl DirectedPowI<$ty> for Malachite {
-            fn eval(base: $ty, exponent: i32, direction: Direction) -> Result<Rounded<$ty>> {
+            fn eval(base: $ty, exponent: &i32, direction: Direction) -> Result<Rounded<$ty>> {
                 if !base.is_finite() {
                     return Err(non_finite_input());
+                }
+                if base == 0.0 && *exponent < 0 {
+                    return Err(Error::new(
+                        ErrorKind::DivisionByZero,
+                        "zero to a negative power",
+                    ));
                 }
                 // Use the sign bit, not `< 0.0`, so `-0.0` raised to an odd power
                 // keeps its negative sign (matching IEEE / MPFR).
                 let negate = base.is_sign_negative() && exponent % 2 != 0;
-                let compute_direction = if negate { opposite(direction) } else { direction };
+                let compute_direction = if negate {
+                    opposite(direction)
+                } else {
+                    direction
+                };
                 let abs_base = base.abs().to_float();
-                let exp_float = malachite::Integer::from(exponent).to_float();
+                let exp_float = malachite::Integer::from(*exponent).to_float();
                 let (mut result, _) =
                     abs_base.pow_prec_round(exp_float, WORK_PREC, to_rm(compute_direction));
                 if negate {

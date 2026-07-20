@@ -2,15 +2,17 @@
 
 Status: confirmed on the locked baseline. Confidence: high. Classification: `incorrect-result`.
 
+Contract: `backend_conformance`. Owner: `backend`. Masked by adapter: `true`.
+
 Latest release check: Reproduces directly against dashu 0.5.0. opendp-num defends against it by not trusting the Approximation tag, so it no longer manifests through the adapter, but the dashu defect itself remains.
 
 ## Summary
 
-IBig::from(-(2^128 - 1)).to_f64() returns Approximation::Exact(-3.402823669209385e38) even though -(2^128 - 1) is not representable as f64, and the returned value is on the wrong side of the exact value (larger magnitude). A caller that trusts the Exact tag gets an incorrect, non-directed result.
+IBig::from(-(2^128 - 1)).to_f64() returns Approximation::Exact(-3.402823669209385e38) even though -(2^128 - 1) is not representable as f64. Root cause (dashu-int-0.5.0/src/convert.rs:1130-1140, to_f64_small; to_f32_small is not affected, being guarded by is_infinite): the exactness test is `let back = f as DoubleWord; back.partial_cmp(&dword)`, but `f as DoubleWord` is a SATURATING float->int cast. For dword = DoubleWord::MAX (2^128-1 on 64-bit), f rounds up to 2^128 and `(2^128) as u128` saturates back to u128::MAX == dword, so the comparison reports Equal and the value is tagged Exact. It only misfires at exactly DoubleWord::MAX; nearby values saturate to a larger `back` and are correctly Inexact.
 
 ## Impact
 
-Any consumer relying on to_f64 to signal exactness, or on the directed rounding implied by the Approximation sign, receives a silently incorrect conversion.
+A caller trusting the Exact tag (or the Approximation sign for directed rounding) gets a silently incorrect, non-directed conversion at the type-maximum boundary. opendp-num defends by re-deriving the rounding from the exact rational and ignoring the tag.
 
 ## Tested baseline
 
@@ -32,8 +34,8 @@ Reproduced directly against the library API; see the command above.
 
 ## Deduplication rationale
 
-A single dashu conversion-rounding/exactness-reporting defect. Distinct from the correctly-rounded-arithmetic behavior of RBig.
+A single dashu-int conversion exactness-reporting defect caused by a saturating float->int cast in the exactness test. Verified directly via examples/root_cause.rs and by source audit.
 
 ## Reporting note
 
-This report describes behavior observed through `opendp-num`'s Dashu adapter and compares directed primitive results bit-for-bit with Rug/MPFR. Upstream maintainers should confirm whether the defect belongs in Dashu itself or in the adapter before assigning it.
+This is a direct provider probe. The opendp-num adapter does not expose this arbitrary-precision float conversion path, so the backend defect is retained even though it does not currently violate the public uniformity surface.

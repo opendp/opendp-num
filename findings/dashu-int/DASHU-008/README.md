@@ -1,16 +1,18 @@
-# DASHU-008: Rational construction triggers internal allocation panic in GCD
+# DASHU-008: Rational reduction: Lehmer GCD reaches Burnikel-Ziegler division that overflows a pre-sized scratchpad
 
 Status: confirmed on the locked baseline. Confidence: high. Classification: `panic`.
+
+Contract: `uniformity`. Owner: `backend`. Masked by adapter: `false`.
 
 Latest release check: Still reproduces with dashu-int 0.5.0.
 
 ## Summary
 
-Constructing and reducing a fuzzed rational reaches dashu-int's divide-and-conquer GCD and panics with `internal error: not enough memory allocated`.
+Constructing/reducing a fuzzed rational calls plain GCD (dashu-ratio reduce -> gcd_in_place, Lehmer). The scratchpad is sized ONCE from the initial operand lengths (gcd_ops.rs:140 -> div::memory_requirement_exact, div/mod.rs:258-265 - which returns zero_layout when the initial pair is within threshold::simple()=32). But each euclidean step's division dispatches on the CURRENT lengths (div/mod.rs:285): as Lehmer shrinks y while x stays large, a later lopsided step enters Burnikel-Ziegler divide-and-conquer division, whose multiplication temporary (divide_conquer.rs:127 -> mul -> karatsuba.rs:94) allocates scratch that was never reserved, so allocate_slice_initialize's expect panics at dashu-int-0.5.0/src/memory.rs:150 ("internal error: not enough memory allocated").
 
 ## Impact
 
-Valid large integer inputs can panic during rational normalization.
+Valid large integer inputs can abort the process during rational normalization.
 
 ## Tested baseline
 
@@ -34,8 +36,8 @@ cargo fuzz run --sanitizer none exact_rational findings/dashu-int/DASHU-008/inpu
 
 ## Deduplication rationale
 
-A unique raw backend panic identified by its dashu-int memory.rs assertion and GCD stack.
+One dashu-int allocation defect: the scratchpad reservation (initial lengths) and the per-step division dispatch (current lengths) use divergent predicates. Traced by source audit; both retained reproducers hit memory.rs:150.
 
 ## Reporting note
 
-This report describes behavior observed through `opendp-num`'s Dashu adapter and compares directed primitive results bit-for-bit with Rug/MPFR. Upstream maintainers should confirm whether the defect belongs in Dashu itself or in the adapter before assigning it.
+This report describes behavior observed through opendp-num's backend-neutral uniformity contract. The retained evidence identifies whether the cause is in a provider or in the adapter.

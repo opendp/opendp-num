@@ -9,6 +9,8 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+pub mod witnesses;
+
 #[derive(Arbitrary, Clone, Debug)]
 pub struct UnaryCase {
     pub format: u8,
@@ -297,16 +299,60 @@ pub fn fail(
     for (key, value) in fields {
         context.insert((*key).to_owned(), Value::String(value.clone()));
     }
+    let context_value = |key: &str, fallback: &str| {
+        context
+            .get(key)
+            .cloned()
+            .unwrap_or_else(|| Value::String(fallback.to_owned()))
+    };
+    let default_contract = if target.starts_with("backend_") {
+        "backend_conformance"
+    } else {
+        "uniformity"
+    };
+    let contract = context_value("contract", default_contract);
+    let provider = context_value("provider", "multiple");
+    let construction = context_value("construction", "adapter_input");
+    let source_type = context_value("source_type", "unspecified");
+    let source_precision = context_value("source_precision", "unspecified");
+    let significand_bits = context_value("significand_bits", "unspecified");
+    let oracle = context_value("oracle", "unspecified");
+    let expected_class = context_value("expected_class", "unspecified");
+    let observed_class = context_value("observed_class", "unspecified");
+    let masked_by_adapter = context_value("masked_by_adapter", "false");
+    let adapter_result = context_value("adapter_result", "not_evaluated");
+    let raw_backend_result = context_value("raw_backend_result", "not_evaluated");
+    let owner = context_value(
+        "owner",
+        if default_contract == "backend_conformance" {
+            "backend"
+        } else {
+            "unspecified"
+        },
+    );
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_secs())
         .unwrap_or_default();
     let report = json!({
-        "schema": 1,
+        "schema": 2,
         "timestamp_unix": timestamp,
         "target": target,
         "operation": operation,
         "reason": reason,
+        "contract": contract,
+        "provider": provider,
+        "owner": owner,
+        "construction": construction,
+        "source_type": source_type,
+        "source_precision": source_precision,
+        "significand_bits": significand_bits,
+        "oracle": oracle,
+        "expected_class": expected_class,
+        "observed_class": observed_class,
+        "masked_by_adapter": masked_by_adapter,
+        "adapter_result": adapter_result,
+        "raw_backend_result": raw_backend_result,
         "reproducer": raw_path,
         "input_hex": hex(input),
         "context": context,
