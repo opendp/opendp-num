@@ -167,6 +167,19 @@
       "owner": "backend",
       "reports": [],
       "title": "High-precision DBig to primitive conversion panics with debug assertions"
+    },
+    {
+      "classification": "panic",
+      "confidence": "high",
+      "contract": "backend_conformance",
+      "directory": "findings/dashu-float/DASHU-022",
+      "id": "DASHU-022",
+      "inputs": [],
+      "library": "dashu-float",
+      "masked_by_adapter": true,
+      "owner": "backend",
+      "reports": [],
+      "title": "Exact primitive zero converts to an unlimited-precision FBig that exact transcendental special cases reject"
     }
   ],
   "schema": 1
