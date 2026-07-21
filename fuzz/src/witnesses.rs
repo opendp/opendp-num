@@ -108,3 +108,9 @@ pub fn witness_malachite_float() {}
 pub fn witness_backend_float_conversion() {
     witness_dashu_fbig_to_f64();
 }
+pub fn witness_backend_float_extremes() {
+    let up = FBig::<Up>::from_parts(IBig::ONE, isize::MIN);
+    let down = FBig::<Down>::from_parts(IBig::ONE, isize::MAX);
+    let _ = up.exp();
+    let _ = down.powi(IBig::ONE);
+}

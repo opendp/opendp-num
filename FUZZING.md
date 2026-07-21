@@ -23,8 +23,9 @@ cd fuzz
 | `opendp_sequences` | bytecode-generated compositions of every directed arithmetic and transcendental operation, checked after every step against MPFR |
 | `malachite_float` | backend differential qualification for Malachite float arithmetic, transcendental behavior, power, and conversion |
 | `backend_float_conversion` | backend-conformance probes for raw Dashu `FBig<R,2>`, `FBig<R,10>`, and `DBig` construction via `from_parts`, conversion to f32/f64, exactness metadata, signed zero, panic freedom, and duration context |
+| `backend_float_extremes` | raw Dashu `FBig<R,2>` `exp`, `exp_m1`, and exact power-of-two `powi` over eight precisions, both directed modes, primitive bit extrema, `isize` exponent endpoints/neighbors, arbitrary-size exponents, signs, structural exact-result oracles, and range invariants |
 
-The manifest currently records six typed P0 contracts and 51 legacy operation audits. The typed set closes the arbitrary-exponent and raw Dashu conversion blind spots; the remaining legacy entries must be migrated to typed witnesses before the project claims complete signature-level coverage.
+The manifest currently records seven typed P0 contracts and 51 legacy operation audits. The typed set closes the arbitrary-exponent, raw Dashu conversion, and raw `FBig` range-extreme blind spots; the remaining legacy entries must be migrated to typed witnesses before the project claims complete signature-level coverage.
 
 ## Search-space strategy
 
@@ -40,6 +41,8 @@ The harnesses deliberately combine several kinds of input generation:
 - operation bytecode sequences of up to 32 steps;
 - target-specific dictionaries and deterministic boundary corpora;
 - libFuzzer comparison tracing plus `-use_value_profile=1`.
+
+Raw `FBig` extremes use two complementary execution modes. `backend_float_extremes` keeps mutation inputs inside resource-safe domains and classifies known aborting range paths before invoking Dashu, because libFuzzer builds abort rather than unwind. `./verify_raw_extremes.py` regenerates and replays all 5,888 deterministic seeds in a temporary corpus, then runs subprocess-isolated debug/release audits including 2,064 `exp_m1` range-boundary cases and an instrumented allocation probe. This separation prevents one known panic or OOM from masquerading as a complete run.
 
 Each core runs a separate libFuzzer process with a unique log. Workers for the same target share a persistent corpus and reload discoveries every five seconds. This avoids libFuzzer `-jobs` log collisions while retaining cross-worker corpus sharing.
 
@@ -81,6 +84,7 @@ Useful options:
   --target directed_binary \
   --target conversions \
   --target backend_float_conversion \
+  --target backend_float_extremes \
   --target alp_primitives
 
 # Periodic memory-safety campaign
@@ -170,6 +174,7 @@ For publication-oriented triage, the reviewed registry and curated output are ma
 ```bash
 ./verify_findings.py
 ./verify_backend_profiles.py
+./verify_raw_extremes.py
 ./triage_findings.py
 ./quarantine_known.py --apply
 ```

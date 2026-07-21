@@ -34,6 +34,7 @@ TARGETS = (
     Target("directed_binary", weight=4, max_len=64, timeout=15, dictionary="float.dict"),
     Target("conversions", weight=3, max_len=3000, timeout=20, dictionary="float.dict"),
     Target("backend_float_conversion", weight=3, max_len=1024, timeout=10, dictionary="float.dict"),
+    Target("backend_float_extremes", weight=4, max_len=64, timeout=10, dictionary="float.dict"),
     Target("primitive_casts", weight=2, max_len=4096, timeout=20, dictionary="integer.dict"),
     Target("alp_primitives", weight=2, max_len=64, timeout=20, dictionary="float.dict"),
     Target("opendp_sequences", weight=5, max_len=4096, timeout=25, dictionary="sequence.dict"),
@@ -394,6 +395,7 @@ def write_runner_report(
     tail = "\n".join(text.splitlines()[-200:])
     backend_targets = {
         "backend_float_conversion": "dashu",
+        "backend_float_extremes": "dashu",
         "malachite_float": "malachite",
     }
     contract = "backend_conformance" if target in backend_targets else "uniformity"

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import struct
 import hashlib
 from pathlib import Path
@@ -10,13 +11,14 @@ from pathlib import Path
 from quarantine_known import known_input_hashes
 
 ROOT = Path(__file__).resolve().parent
+CORPUS_ROOT = ROOT / "corpus"
 KNOWN_HASHES = known_input_hashes()
 
 
 def write_seed(target: str, name: str, data: bytes) -> None:
     if hashlib.sha256(data).hexdigest() in KNOWN_HASHES.get(target, set()):
         return
-    directory = ROOT / "corpus" / target
+    directory = CORPUS_ROOT / target
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / name
     if not path.exists() or path.read_bytes() != data:
@@ -55,7 +57,41 @@ def backend_conversion_case(
     return struct.pack("<BBBBi", fmt, radix, rounding, negative, exponent) + encoded_payload
 
 
+def backend_extreme_case(
+    operation: int,
+    precision: int,
+    input_selector: int,
+    bits: int,
+    base_exponent: int,
+    exponent: int,
+    offset: int,
+    negative: bool,
+) -> bytes:
+    return struct.pack(
+        "<BBBQBBhB",
+        operation,
+        precision,
+        input_selector,
+        bits,
+        base_exponent,
+        exponent,
+        offset,
+        negative,
+    )
+
+
 def main() -> None:
+    global CORPUS_ROOT
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--corpus-root",
+        type=Path,
+        help="write corpora here instead of fuzz/corpus (dictionaries remain in fuzz/dictionaries)",
+    )
+    args = parser.parse_args()
+    if args.corpus_root is not None:
+        CORPUS_ROOT = args.corpus_root.resolve()
+
     float_bits = {
         "zero": 0x0000000000000000,
         "neg_zero": 0x8000000000000000,
@@ -75,6 +111,51 @@ def main() -> None:
         for index, (name, bits) in enumerate(float_bits.items()):
             write_seed("directed_unary", f"op{op}-{name}", unary_case(0, op, index & 1, 31, bits, 2))
             write_seed("directed_unary", f"f32-op{op}-{name}", unary_case(1, op, index & 1, 31, bits, -2))
+
+    # Raw Dashu extrema: every precision, literal primitive boundary, exact
+    # exponent endpoint and immediate neighbor is represented deterministically.
+    raw_exp_values = {
+        "zero": 0.0,
+        "neg_zero": -0.0,
+        "one": 1.0,
+        "neg_one": -1.0,
+        "f64_max": float.fromhex("0x1.fffffffffffffp+1023"),
+        "neg_f64_max": -float.fromhex("0x1.fffffffffffffp+1023"),
+        "range_reduction_edge": -(2**63) * 0.6931471805599453,
+        "neg_two_to_63": float(-(2**63)),
+    }
+    for operation in (0, 1):
+        for precision in range(8):
+            for name, value in raw_exp_values.items():
+                bits = struct.unpack("<Q", struct.pack("<d", value))[0]
+                write_seed(
+                    "backend_float_extremes",
+                    f"op{operation}-p{precision}-{name}",
+                    backend_extreme_case(operation, precision, 31, bits, 0, 0, 0, False),
+                )
+
+    for precision in range(8):
+        for base_selector in range(9):
+            for exponent_selector in range(8):
+                for offset in (-2, -1, 0, 1, 2):
+                    for negative in (False, True):
+                        write_seed(
+                            "backend_float_extremes",
+                            (
+                                f"powi-p{precision}-b{base_selector}-e{exponent_selector}"
+                                f"-o{offset}-n{int(negative)}"
+                            ),
+                            backend_extreme_case(
+                                2,
+                                precision,
+                                0,
+                                0,
+                                base_selector,
+                                exponent_selector,
+                                offset,
+                                negative,
+                            ),
+                        )
 
     # Exercise arbitrary-precision exponent parsing, sign, and parity beyond i32.
     for name, sign_parity, magnitude in [

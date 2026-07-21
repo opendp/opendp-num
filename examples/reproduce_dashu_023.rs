@@ -13,6 +13,16 @@ fn main() {
     let down_input = FBig::<Down>::from_parts(-IBig::ONE, 63);
     assert_eq!(up_input.precision(), 1);
 
+    let up_exp = up_input.exp();
+    let down_exp = down_input.exp();
+    assert!(up_exp.repr().significand().is_zero());
+    assert!(down_exp.repr().significand().is_zero());
+
+    // The exact positive result is below FBig's exponent range. Directed Up
+    // must therefore return the smallest positive representable FBig.
+    let expected_exp_up = FBig::<Up>::from_parts(IBig::ONE, isize::MIN);
+    assert!(expected_exp_up > up_exp);
+
     let up_approximation = up_input
         .context()
         .exp_m1(up_input.repr(), None)
@@ -36,5 +46,7 @@ fn main() {
     let expected_up = FBig::<Up>::from_parts(-IBig::ONE, -1);
     assert_eq!(expected_up.to_f64().value(), -0.5);
 
-    println!("DASHU-023 reproduced: Up exp_m1(-2^63)=-1 Exact; expected=-0.5 at precision=1");
+    println!(
+        "DASHU-023 reproduced: Up exp(-2^63)=0 and exp_m1(-2^63)=-1 Exact; both below their directed results"
+    );
 }

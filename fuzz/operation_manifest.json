@@ -10,7 +10,8 @@
     {"name": "alp_primitives", "contract": "uniformity", "witness": "witness_alp_primitives"},
     {"name": "opendp_sequences", "contract": "uniformity", "witness": "witness_opendp_sequences"},
     {"name": "malachite_float", "contract": "backend_conformance", "witness": "witness_malachite_float"},
-    {"name": "backend_float_conversion", "contract": "backend_conformance", "witness": "witness_backend_float_conversion"}
+    {"name": "backend_float_conversion", "contract": "backend_conformance", "witness": "witness_backend_float_conversion"},
+    {"name": "backend_float_extremes", "contract": "backend_conformance", "witness": "witness_backend_float_extremes"}
   ],
   "contracts": [
     {
@@ -76,6 +77,17 @@
       "states": ["arbitrary_precision", "subnormal_halfway", "overwide_significand"],
       "target": "backend_float_conversion",
       "witness": "witness_dashu_dbig_to_primitive"
+    },
+    {
+      "id": "dashu-raw-fbig-extreme-operations",
+      "contract": "backend_conformance",
+      "provider": "dashu",
+      "operation": "exp/exp_m1/powi",
+      "input_types": {"value": "raw_FBig", "exponent": "arbitrary_precision_signed_integer"},
+      "rounding": ["down", "up"],
+      "states": ["primitive_extrema", "exponent_range_endpoints", "neighbors", "out_of_range"],
+      "target": "backend_float_extremes",
+      "witness": "witness_backend_float_extremes"
     }
   ],
   "differential_targets": [

@@ -36,11 +36,12 @@ cargo test --all-features
 cargo bench --all-features
 cd fuzz
 ./check_coverage.py
+./verify_raw_extremes.py
 ./ci_smoke.sh
 ./run_campaign.py
 ```
 
-The campaign currently has ten classified targets. Its schema-2 manifest contains six typed P0 witnesses for arbitrary-precision power and raw Dashu float conversion, plus 51 legacy operation audits inherited from the OpenDP surface review. Those legacy needle checks remain useful regression coverage but are not claimed as complete typed proof of the numerical surface. The campaign uses per-core processes, persistent shared corpora, boundary seeds, value profiling, structured violation reports, runner-level timeout/crash reports, and report aggregation.
+The campaign currently has eleven classified targets. Its schema-2 manifest contains seven typed P0 witnesses for arbitrary-precision power, raw Dashu float conversion, and raw `FBig` extreme operations, plus 51 legacy operation audits inherited from the OpenDP surface review. Those legacy needle checks remain useful regression coverage but are not claimed as complete typed proof of the numerical surface. The campaign uses per-core processes, persistent shared corpora, boundary seeds, value profiling, structured violation reports, runner-level timeout/crash reports, and report aggregation. The raw-extreme verifier separately replays 5,888 generated seeds and 2,064 subprocess-isolated range-boundary cases in debug and release, so known abort and allocation classes cannot truncate the matrix.
 
 Confirmed, conservatively deduplicated findings live under [`findings/`](findings/). They identify whether a violation is a public uniformity failure or a direct backend-conformance failure, who owns the cause, and whether the adapter masks it. Raw fuzzer reports remain separate from this publishable evidence layer. Inputs that turned out to be `opendp-num` adapter defects rather than Dashu bugs have been fixed in `src/backend/dashu.rs` and retained under [`findings/caused-by-adapter/`](findings/caused-by-adapter/).
 

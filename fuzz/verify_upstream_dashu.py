@@ -14,10 +14,9 @@ from pathlib import Path
 
 REPOSITORY = Path(__file__).resolve().parent.parent
 AUDIT_SOURCE = REPOSITORY / "examples" / "audit_dashu_pr2801.rs"
-EXPECTED = (
-    "PR2801 audit: DASHU-022 and DASHU-023 reproduced; no premature exp or powi "
-    "saturation while the exact result remains in FBig range"
-)
+RESOURCE_SOURCE = REPOSITORY / "examples" / "reproduce_dashu_027.rs"
+EXPECTED = "PR2801 audit: DASHU-022 through DASHU-026 reproduced across directed range boundaries"
+RESOURCE_EXPECTED = "DASHU-027 reproduced: exp_m1(±1e8)"
 
 
 def run(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -32,9 +31,9 @@ def run(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
-def check(command: list[str], cwd: Path, label: str) -> bool:
+def check(command: list[str], cwd: Path, label: str, expected: str = EXPECTED) -> bool:
     result = run(command, cwd)
-    passed = result.returncode == 0 and EXPECTED in result.stdout
+    passed = result.returncode == 0 and expected in result.stdout
     print(f"{label}: {'PASS' if passed else 'FAIL'}")
     if not passed:
         print(result.stdout[-4000:])
@@ -67,8 +66,9 @@ def check_master(checkout: Path) -> bool:
         dashu = temp / "dashu"
         commit = archive_checkout(checkout, dashu)
         probe = temp / "probe"
-        (probe / "src").mkdir(parents=True)
-        shutil.copyfile(AUDIT_SOURCE, probe / "src" / "main.rs")
+        (probe / "src" / "bin").mkdir(parents=True)
+        shutil.copyfile(AUDIT_SOURCE, probe / "src" / "bin" / "audit.rs")
+        shutil.copyfile(RESOURCE_SOURCE, probe / "src" / "bin" / "resource.rs")
         (probe / "Cargo.toml").write_text(
             """[package]
 name = "dashu-pr2801-master-audit"
@@ -81,7 +81,7 @@ dashu = { path = "../dashu", features = ["num-traits_v02"] }
         )
         manifest = probe / "Cargo.toml"
         debug = check(
-            ["cargo", "run", "--offline", "--manifest-path", str(manifest)],
+            ["cargo", "run", "--offline", "--manifest-path", str(manifest), "--bin", "audit"],
             probe,
             f"master {commit[:12]} debug",
         )
@@ -93,11 +93,34 @@ dashu = { path = "../dashu", features = ["num-traits_v02"] }
                 "--release",
                 "--manifest-path",
                 str(manifest),
+                "--bin",
+                "audit",
             ],
             probe,
             f"master {commit[:12]} release",
         )
-        return debug and release
+        resource_debug = check(
+            ["cargo", "run", "--offline", "--manifest-path", str(manifest), "--bin", "resource"],
+            probe,
+            f"master {commit[:12]} resource debug",
+            RESOURCE_EXPECTED,
+        )
+        resource_release = check(
+            [
+                "cargo",
+                "run",
+                "--offline",
+                "--release",
+                "--manifest-path",
+                str(manifest),
+                "--bin",
+                "resource",
+            ],
+            probe,
+            f"master {commit[:12]} resource release",
+            RESOURCE_EXPECTED,
+        )
+        return debug and release and resource_debug and resource_release
 
 
 def main() -> int:
@@ -118,6 +141,18 @@ def main() -> int:
         ["cargo", "run", "--release", "--example", "audit_dashu_pr2801"],
         REPOSITORY,
         "dashu 0.5.0 release",
+    )
+    passed &= check(
+        ["cargo", "run", "--example", "reproduce_dashu_027"],
+        REPOSITORY,
+        "dashu 0.5.0 resource debug",
+        RESOURCE_EXPECTED,
+    )
+    passed &= check(
+        ["cargo", "run", "--release", "--example", "reproduce_dashu_027"],
+        REPOSITORY,
+        "dashu 0.5.0 resource release",
+        RESOURCE_EXPECTED,
     )
     if args.master_checkout:
         passed &= check_master(args.master_checkout.resolve())

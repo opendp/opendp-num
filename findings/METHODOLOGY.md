@@ -10,6 +10,8 @@ A finding is listed only when its retained input reproduces on the locked depend
 
 Raw infrastructure failures, cancelled workers, and minimization attempts that drift to a different already-known crash are excluded.
 
+Raw range-extreme testing is split between an abort-safe mutation target and deterministic subprocess audits. Known panic/OOM regions are excluded before the libFuzzer call only after a standalone reproducer is registered; `fuzz/verify_raw_extremes.py` still exercises those regions across debug and release profiles. This keeps the campaign progressing without converting an excluded failure into an untested blind spot.
+
 ## Deduplication
 
 Mechanical grouping starts with the target, operation, contract, output pattern, and first backend stack frame. A semantic pass then groups manifestations only when they plausibly share one correction. Ambiguous cases remain separate. Every finding README states its grouping rationale so maintainers can split or merge it.

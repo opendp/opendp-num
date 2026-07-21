@@ -88,3 +88,10 @@ path = "fuzz_targets/backend_float_conversion.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "backend_float_extremes"
+path = "fuzz_targets/backend_float_extremes.rs"
+test = false
+doc = false
+bench = false

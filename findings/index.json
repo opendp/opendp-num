@@ -192,7 +192,59 @@
       "masked_by_adapter": true,
       "owner": "backend",
       "reports": [],
-      "title": "Upward exp_m1 returns Exact(-1) when range reduction exceeds isize"
+      "title": "Astronomical negative exp and exp_m1 violate upward rounding"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "contract": "backend_conformance",
+      "directory": "findings/dashu-float/DASHU-024",
+      "id": "DASHU-024",
+      "inputs": [],
+      "library": "dashu-float",
+      "masked_by_adapter": true,
+      "owner": "backend",
+      "reports": [],
+      "title": "powi panics or returns zero at exact representable isize exponent boundaries"
+    },
+    {
+      "classification": "incorrect-result",
+      "confidence": "high",
+      "contract": "backend_conformance",
+      "directory": "findings/dashu-float/DASHU-025",
+      "id": "DASHU-025",
+      "inputs": [],
+      "library": "dashu-float",
+      "masked_by_adapter": true,
+      "owner": "backend",
+      "reports": [],
+      "title": "powi discards directed range endpoints and panics in the out-of-range reciprocal path"
+    },
+    {
+      "classification": "panic",
+      "confidence": "high",
+      "contract": "backend_conformance",
+      "directory": "findings/dashu-float/DASHU-026",
+      "id": "DASHU-026",
+      "inputs": [],
+      "library": "dashu-float",
+      "masked_by_adapter": true,
+      "owner": "backend",
+      "reports": [],
+      "title": "exp_m1 panics across the negative range-reduction boundary in debug and fuzz builds"
+    },
+    {
+      "classification": "resource-exhaustion",
+      "confidence": "high",
+      "contract": "backend_conformance",
+      "directory": "findings/dashu-float/DASHU-027",
+      "id": "DASHU-027",
+      "inputs": [],
+      "library": "dashu-float",
+      "masked_by_adapter": true,
+      "owner": "backend",
+      "reports": [],
+      "title": "exp_m1 allocates memory proportional to a huge positive exponent in debug and fuzz builds"
     }
   ],
   "schema": 1
