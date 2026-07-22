@@ -121,3 +121,9 @@ Preserve the underflow information and apply the active rounding mode rather tha
 - every saturated result must be marked inexact.
 
 An equivalent implementation could construct a positive underflow approximation for `exp(x)` and then subtract one under the requested context, provided it avoids losing the directed rounding information at the exponent-range boundary.
+
+## Relation to other findings
+
+Shares the same architectural smell as [`DASHU-024`](DASHU-024-powi-range-handling.md): a finite result that lands outside (or asymptotically against) the representable range is collapsed into a mode-independent limiting value — infinity, zero, or `-1` — before directed rounding is applied. Both would benefit from a shared range-endpoint helper that converts a typed range relation into a correctly directed result.
+
+They are filed separately, however, because this defect is localized to `exp_internal` and is **not** repaired by fixing generic `unwrap_fp` alone: the `exp` branch's `Underflow` is later converted to zero by `unwrap_fp`, but the `exp_m1` branch returns `Ok(Exact(-FBig::ONE))` directly (`exp.rs:405`), bypassing `unwrap_fp` entirely and additionally attaching false `Exact` metadata. A correct fix must therefore also change the `exp_internal` saturation branch itself, not only the convenience-layer range conversion.

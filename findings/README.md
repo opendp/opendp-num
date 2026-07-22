@@ -11,10 +11,8 @@ These are conservatively deduplicated findings from differential and property fu
 | [DASHU-021](dashu-float/DASHU-021/) | dashu-float | backend_conformance | panic | High-precision DBig to primitive conversion panics with debug assertions |
 | [DASHU-022](dashu-float/DASHU-022/) | dashu-float | backend_conformance | panic | Exact primitive zero converts to an unlimited-precision FBig that exact transcendental special cases reject |
 | [DASHU-023](dashu-float/DASHU-023/) | dashu-float | backend_conformance | incorrect-result | Astronomical negative exp and exp_m1 violate upward rounding |
-| [DASHU-024](dashu-float/DASHU-024/) | dashu-float | backend_conformance | incorrect-result | powi panics or returns zero at exact representable isize exponent boundaries |
-| [DASHU-025](dashu-float/DASHU-025/) | dashu-float | backend_conformance | incorrect-result | powi discards directed range endpoints and panics in the out-of-range reciprocal path |
-| [DASHU-026](dashu-float/DASHU-026/) | dashu-float | backend_conformance | panic | exp_m1 panics across the negative range-reduction boundary in debug and fuzz builds |
-| [DASHU-027](dashu-float/DASHU-027/) | dashu-float | backend_conformance | resource-exhaustion | exp_m1 allocates memory proportional to a huge positive exponent in debug and fuzz builds |
+| [DASHU-024](dashu-float/DASHU-024/) | dashu-float | backend_conformance | incorrect-result / panic | powi range handling misclassifies representable endpoints, ignores directed rounding, and unwraps range errors before reciprocal |
+| [DASHU-026](dashu-float/DASHU-026/) | dashu-float | backend_conformance | panic / resource-exhaustion | Debug assertion in round_fract materializes B^exponent_gap (exp_m1 boundary panic and 20 MB allocation growth) |
 
 ## Reproduce everything
 
